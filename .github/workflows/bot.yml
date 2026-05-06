@@ -1,0 +1,26 @@
+name: GTAA Bot
+
+on:
+  schedule:
+    - cron: "0 6 * * *"  # jeden Tag 06:00
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: node strategy.js
+
+      - run: |
+          git config user.name "bot"
+          git config user.email "bot@bot.com"
+          git add signals.json
+          git commit -m "update signals" || echo "no changes"
+          git push
