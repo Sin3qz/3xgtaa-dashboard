@@ -1,47 +1,149 @@
-[
-  {
-    "name": "Nasdaq",
-    "price": 29366.939453125,
-    "momentum": 0.6801963103100173,
-    "sma150": 25433.005169270833,
-    "smaCheck": true,
-    "valid": true,
-    "rank": 2
-  },
-  {
-    "name": "EuroStoxx50",
-    "price": 5861.06982421875,
-    "momentum": 0.09424072059999822,
-    "sma150": 5802.4597265625,
-    "smaCheck": true,
-    "valid": true,
-    "rank": "-"
-  },
-  {
-    "name": "Gold",
-    "price": 4710.2001953125,
-    "momentum": 0.48724506663233025,
-    "sma150": 4562.006655273438,
-    "smaCheck": true,
-    "valid": true,
-    "rank": 3
-  },
-  {
-    "name": "Oil",
-    "price": 100.16999816894531,
-    "momentum": 1.9312583459394614,
-    "sma150": 72.70246655782064,
-    "smaCheck": true,
-    "valid": true,
-    "rank": 1
-  },
-  {
-    "name": "Bitcoin",
-    "price": 67993.109375,
-    "momentum": -0.22782802571655603,
-    "sma150": 66149.21640625,
-    "smaCheck": true,
-    "valid": false,
-    "rank": "-"
-  }
-]
+{
+  "updated": "2026-05-14T12:51:40.739Z",
+  "outOfMarket": false,
+  "top3": [
+    {
+      "name": "WTI Oil",
+      "symbol": "CL=F",
+      "type": "OIL",
+      "price": 100.37000274658203,
+      "momentum": 1.9431010018446069,
+      "sma150": 72.70379992167155,
+      "sma5": 99.41199951171875,
+      "smaCheck": true,
+      "valid": true
+    },
+    {
+      "name": "Emerging Markets",
+      "symbol": "EEM",
+      "type": "EM",
+      "price": 67.20999908447266,
+      "momentum": 0.7292990607822409,
+      "sma150": 57.890933202107746,
+      "sma5": 67.08999938964844,
+      "smaCheck": true,
+      "valid": true
+    },
+    {
+      "name": "Nasdaq 100",
+      "symbol": "^NDX",
+      "type": "NASDAQ",
+      "price": 29366.939453125,
+      "momentum": 0.6801963103100173,
+      "sma150": 25433.005169270833,
+      "sma5": 29110.26796875,
+      "smaCheck": true,
+      "valid": true
+    }
+  ],
+  "table": [
+    {
+      "name": "Nasdaq 100",
+      "symbol": "^NDX",
+      "type": "NASDAQ",
+      "price": 29366.939453125,
+      "momentum": 0.6801963103100173,
+      "sma150": 25433.005169270833,
+      "sma5": 29110.26796875,
+      "smaCheck": true,
+      "valid": true,
+      "rank": 3
+    },
+    {
+      "name": "EuroStoxx50",
+      "symbol": "^STOXX50E",
+      "type": "EU",
+      "price": 5861.06982421875,
+      "momentum": 0.09424072059999822,
+      "sma150": 5802.4597265625,
+      "sma5": 5867.51396484375,
+      "smaCheck": true,
+      "valid": true,
+      "rank": "-"
+    },
+    {
+      "name": "Emerging Markets",
+      "symbol": "EEM",
+      "type": "EM",
+      "price": 67.20999908447266,
+      "momentum": 0.7292990607822409,
+      "sma150": 57.890933202107746,
+      "sma5": 67.08999938964844,
+      "smaCheck": true,
+      "valid": true,
+      "rank": 2
+    },
+    {
+      "name": "Bitcoin",
+      "symbol": "BTC-EUR",
+      "type": "BTC",
+      "price": 68143.8515625,
+      "momentum": -0.21946503922782878,
+      "sma150": 66150.22135416667,
+      "sma5": 68714.7359375,
+      "smaCheck": true,
+      "valid": false,
+      "rank": "-"
+    },
+    {
+      "name": "Gold",
+      "symbol": "GC=F",
+      "type": "GOLD",
+      "price": 4712.5,
+      "momentum": 0.48943601113793167,
+      "sma150": 4562.021987304687,
+      "sma5": 4705.380078125,
+      "smaCheck": true,
+      "valid": true,
+      "rank": "-"
+    },
+    {
+      "name": "Bonds",
+      "symbol": "TLT",
+      "type": "BONDS",
+      "price": 84.80000305175781,
+      "momentum": -0.14242432864750265,
+      "sma150": 88.17653335571289,
+      "sma5": 85.41600036621094,
+      "smaCheck": false,
+      "valid": false,
+      "rank": "-"
+    },
+    {
+      "name": "WTI Oil",
+      "symbol": "CL=F",
+      "type": "OIL",
+      "price": 100.37000274658203,
+      "momentum": 1.9431010018446069,
+      "sma150": 72.70379992167155,
+      "sma5": 99.41199951171875,
+      "smaCheck": true,
+      "valid": true,
+      "rank": 1
+    },
+    {
+      "name": "USD/EUR",
+      "symbol": "USDEUR=X",
+      "type": "USDLONG",
+      "price": 0.8544999957084656,
+      "momentum": 0.009719699922925207,
+      "sma150": 0.8563041337331136,
+      "sma5": 0.8515239953994751,
+      "smaCheck": false,
+      "valid": false,
+      "rank": "-"
+    },
+    {
+      "name": "EUR/USD",
+      "symbol": "EURUSD=X",
+      "type": "USDSHORT",
+      "price": 1.1702749729156494,
+      "momentum": -0.009373959468165438,
+      "sma150": 1.1679194410641989,
+      "sma5": 1.1743715524673461,
+      "smaCheck": true,
+      "valid": false,
+      "rank": "-"
+    }
+  ]
+}
