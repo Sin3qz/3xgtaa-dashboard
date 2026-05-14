@@ -1,25 +1,30 @@
 const fs = require("fs");
 
-// Node 18+ hat fetch eingebaut → KEIN import nötig
+const assets = [
+  { name: "Nasdaq 100", symbol: "^NDX", type: "NASDAQ" },
+  { name: "EuroStoxx50", symbol: "^STOXX50E", type: "EU" },
+  { name: "Emerging Markets", symbol: "EEM", type: "EM" },
+  { name: "Bitcoin", symbol: "BTC-EUR", type: "BTC" },
+  { name: "Gold", symbol: "GC=F", type: "GOLD" },
+  { name: "Bonds", symbol: "TLT", type: "BONDS" },
+  { name: "WTI Oil", symbol: "CL=F", type: "OIL" },
+  { name: "USD/EUR", symbol: "USDEUR=X", type: "USDLONG" },
+  { name: "EUR/USD", symbol: "EURUSD=X", type: "USDSHORT" }
+];
 
 async function fetchData(symbol) {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1y&interval=1d`;
+  const url =
+    `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=2y&interval=1d`;
+
   const res = await fetch(url);
   const json = await res.json();
 
-  return json.chart.result[0].indicators.quote[0].close;
+  return json.chart.result[0].indicators.quote[0].close
+    .filter(v => v !== null);
 }
 
-const assets = [
-  { name: "Nasdaq", symbol: "^NDX" },
-  { name: "EuroStoxx50", symbol: "^STOXX50E" },
-  { name: "Gold", symbol: "GC=F" },
-  { name: "Oil", symbol: "CL=F" },
-  { name: "Bitcoin", symbol: "BTC-EUR" }
-];
-
 function pct(a, b) {
-  return a / b - 1;
+  return (a / b - 1);
 }
 
 function momentum(p) {
@@ -39,10 +44,13 @@ function sma(p, len) {
 }
 
 async function run() {
+
   let results = [];
 
-  for (let a of assets) {
+  for (const a of assets) {
+
     try {
+
       const prices = await fetchData(a.symbol);
 
       if (!prices || prices.length < 200) continue;
@@ -54,30 +62,99 @@ async function run() {
 
       results.push({
         name: a.name,
+        symbol: a.symbol,
+        type: a.type,
         price,
         momentum: m,
         sma150,
+        sma5,
         smaCheck: sma5 > sma150,
         valid: m > 0 && price > sma150
       });
 
     } catch (e) {
-      console.log("Error with", a.name);
+      console.log("ERROR:", a.name);
     }
   }
 
+  // Nur gültige Assets
   let valid = results.filter(r => r.valid);
+
+  // Sortierung Momentum
   valid.sort((a, b) => b.momentum - a.momentum);
+
+  // EU vs EM Regel
+  const hasEU = valid.find(v => v.type === "EU");
+  const hasEM = valid.find(v => v.type === "EM");
+
+  if (hasEU && hasEM) {
+
+    if (hasEU.momentum >= hasEM.momentum) {
+      valid = valid.filter(v => v.type !== "EM");
+    } else {
+      valid = valid.filter(v => v.type !== "EU");
+    }
+  }
+
   const top3 = valid.slice(0, 3);
 
+  // Ranking eintragen
   results = results.map(r => {
+
     const rank = top3.findIndex(t => t.name === r.name);
-    return { ...r, rank: rank >= 0 ? rank + 1 : "-" };
+
+    return {
+      ...r,
+      rank: rank >= 0 ? rank + 1 : "-"
+    };
   });
 
-  fs.writeFileSync("signals.json", JSON.stringify(results, null, 2));
+  // Cash wenn weniger als 3
+  const outOfMarket = top3.length < 3;
 
-  console.log("DONE");
+  const output = {
+    updated: new Date().toISOString(),
+    outOfMarket,
+    top3,
+    table: results
+  };
+
+  fs.writeFileSync(
+    "signals.json",
+    JSON.stringify(output, null, 2)
+  );
+
+  console.log("signals updated");
+
+  await sendDiscord(top3, outOfMarket);
+
+}
+
+async function sendDiscord(top3, outOfMarket) {
+
+  if (!process.env.DISCORD_WEBHOOK) {
+    console.log("No Discord webhook");
+    return;
+  }
+
+  const text = top3.map((t, i) =>
+    `#${i + 1} ${t.name} | Momentum ${(t.momentum * 100).toFixed(2)}%`
+  ).join("\n");
+
+  await fetch(process.env.DISCORD_WEBHOOK, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      content:
+        `📊 GTAA Daily Signals\n\n` +
+        `${text}\n\n` +
+        `${outOfMarket ? "⚠️ OUT OF MARKET / XEON" : "✅ INVESTED"}`
+    })
+  });
+
+  console.log("discord sent");
 }
 
 run();
