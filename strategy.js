@@ -132,7 +132,7 @@ async function run() {
 
 async function sendDiscord(top3, outOfMarket) {
 
-  if (!process.env.DISCORD_WEBHOOK) {
+  if (!process.env.GTAA_WEBHOOK) {
     console.log("No Discord webhook");
     return;
   }
@@ -141,7 +141,7 @@ async function sendDiscord(top3, outOfMarket) {
     `#${i + 1} ${t.name} | Momentum ${(t.momentum * 100).toFixed(2)}%`
   ).join("\n");
 
-  await fetch(process.env.DISCORD_WEBHOOK, {
+  await fetch(process.env.GTAA_WEBHOOK, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
