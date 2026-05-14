@@ -1,10 +1,46 @@
 [
   {
-    "name": "Loading...",
-    "price": 0,
-    "momentum": 0,
-    "sma150": 0,
-    "smaCheck": false,
+    "name": "Nasdaq",
+    "price": 29366.939453125,
+    "momentum": 0.6801963103100173,
+    "sma150": 25433.005169270833,
+    "smaCheck": true,
+    "valid": true,
+    "rank": 2
+  },
+  {
+    "name": "EuroStoxx50",
+    "price": 5861.06982421875,
+    "momentum": 0.09424072059999822,
+    "sma150": 5802.4597265625,
+    "smaCheck": true,
+    "valid": true,
+    "rank": "-"
+  },
+  {
+    "name": "Gold",
+    "price": 4710.2001953125,
+    "momentum": 0.48724506663233025,
+    "sma150": 4562.006655273438,
+    "smaCheck": true,
+    "valid": true,
+    "rank": 3
+  },
+  {
+    "name": "Oil",
+    "price": 100.16999816894531,
+    "momentum": 1.9312583459394614,
+    "sma150": 72.70246655782064,
+    "smaCheck": true,
+    "valid": true,
+    "rank": 1
+  },
+  {
+    "name": "Bitcoin",
+    "price": 67993.109375,
+    "momentum": -0.22782802571655603,
+    "sma150": 66149.21640625,
+    "smaCheck": true,
     "valid": false,
     "rank": "-"
   }
