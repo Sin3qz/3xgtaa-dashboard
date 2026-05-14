@@ -1,26 +1,77 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <title>GTAA Dashboard</title>
-</head>
-<body>
-  <h1>📊 GTAA Dashboard</h1>
+<html lang="de">
 
-  <table border="1">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <title>3x GTAA Dashboard</title>
+
+  <style>
+    body {
+      background: #0d1117;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #161b22;
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #30363d;
+      text-align: center;
+    }
+
+    th {
+      background: #21262d;
+    }
+
+    tr:hover {
+      background: #1f2937;
+    }
+
+    .valid {
+      color: #00ff88;
+      font-weight: bold;
+    }
+
+    .out {
+      color: #ff4d4d;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>📊 3x GTAA Dashboard</h1>
+
+  <table>
     <thead>
       <tr>
+        <th>Rank</th>
         <th>Asset</th>
         <th>Preis</th>
         <th>Momentum</th>
         <th>SMA150</th>
         <th>SMA5>SMA150</th>
         <th>Status</th>
-        <th>Rank</th>
       </tr>
     </thead>
+
     <tbody id="table"></tbody>
   </table>
 
   <script src="app.js"></script>
+
 </body>
 </html>
