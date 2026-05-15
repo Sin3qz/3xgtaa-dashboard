@@ -102,23 +102,31 @@ async function run() {
   // Nur gültige
   let valid = results.filter(r => r.valid);
 
-  // EU vs EM Regel
-  const eu = valid.find(v => v.type === "EU");
-  const em = valid.find(v => v.type === "EM");
+ // EU vs EM Regel
+const eu = valid.find(v => v.type === "EU");
+const em = valid.find(v => v.type === "EM");
 
-  let excludedEM = null;
+let excludedEM = null;
 
-  if (eu && em) {
+if (eu && em) {
 
-    if (eu.momentum >= em.momentum) {
-      excludedEM = em.name;
-      valid = valid.filter(v => v.type !== "EM");
-    } else {
-      valid = valid.filter(v => v.type !== "EU");
-    }
+  if (eu.momentum >= em.momentum) {
+
+    excludedEM = em.name;
+
+  } else {
+
+    excludedEM = em.name;
+
   }
+}
 
-  const invested = valid.slice(0, 3).map(v => v.name);
+// Finale Investments OHNE EM
+const investCandidates = valid.filter(v => v.type !== "EM");
+
+const invested = investCandidates
+  .slice(0, 3)
+  .map(v => v.name);
 
   results = results.map(r => ({
     ...r,
