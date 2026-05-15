@@ -24,18 +24,7 @@ async function fetchData(symbol) {
 }
 
 function pct(a, b) {
-  return (a / b - 1);
-}
-
-function momentum(p) {
-  const i = p.length - 1;
-
-  return (
-    pct(p[i], p[i - 21]) +
-    pct(p[i], p[i - 63]) +
-    pct(p[i], p[i - 126]) +
-    pct(p[i], p[i - 189])
-  );
+  return ((a / b) - 1) * 100;
 }
 
 function sma(p, len) {
@@ -55,68 +44,92 @@ async function run() {
 
       if (!prices || prices.length < 200) continue;
 
-      const m = momentum(prices);
+      const i = prices.length - 1;
+
+      const current = prices[i];
+
+      const m1 = pct(current, prices[i - 21]);
+      const m3 = pct(current, prices[i - 63]);
+      const m6 = pct(current, prices[i - 126]);
+      const m9 = pct(current, prices[i - 189]);
+
+      const momentum = m1 + m3 + m6 + m9;
+
       const sma150 = sma(prices, 150);
-      const sma5 = sma(prices, 5);
-      const price = prices.at(-1);
+      const sma20 = sma(prices, 20);
+
+      const sma150Pct = pct(current, sma150);
+      const sma20Pct = pct(sma20, sma150);
 
       results.push({
         name: a.name,
         symbol: a.symbol,
         type: a.type,
-        price,
-        momentum: m,
-        sma150,
-        sma5,
-        smaCheck: sma5 > sma150,
-        valid: m > 0 && price > sma150
+
+        current,
+        p1m: prices[i - 21],
+        p3m: prices[i - 63],
+        p6m: prices[i - 126],
+        p9m: prices[i - 189],
+
+        m1,
+        m3,
+        m6,
+        m9,
+
+        momentum,
+
+        sma150Pct,
+        sma20Pct,
+
+        valid: momentum > 0 && current > sma150
       });
 
     } catch (e) {
-      console.log("ERROR:", a.name);
+      console.log("ERROR", a.name);
     }
   }
 
-  // Nur gültige Assets
+  // Momentum sortieren
+  results.sort((a, b) => b.momentum - a.momentum);
+
+  // Nummern vergeben
+  results = results.map((r, idx) => ({
+    ...r,
+    rank: idx + 1
+  }));
+
+  // Nur gültige
   let valid = results.filter(r => r.valid);
 
-  // Sortierung Momentum
-  valid.sort((a, b) => b.momentum - a.momentum);
-
   // EU vs EM Regel
-  const hasEU = valid.find(v => v.type === "EU");
-  const hasEM = valid.find(v => v.type === "EM");
+  const eu = valid.find(v => v.type === "EU");
+  const em = valid.find(v => v.type === "EM");
 
-  if (hasEU && hasEM) {
+  let excludedEM = null;
 
-    if (hasEU.momentum >= hasEM.momentum) {
+  if (eu && em) {
+
+    if (eu.momentum >= em.momentum) {
+      excludedEM = em.name;
       valid = valid.filter(v => v.type !== "EM");
     } else {
       valid = valid.filter(v => v.type !== "EU");
     }
   }
 
-  const top3 = valid.slice(0, 3);
+  const invested = valid.slice(0, 3).map(v => v.name);
 
-  // Ranking eintragen
-  results = results.map(r => {
-
-    const rank = top3.findIndex(t => t.name === r.name);
-
-    return {
-      ...r,
-      rank: rank >= 0 ? rank + 1 : "-"
-    };
-  });
-
-  // Cash wenn weniger als 3
-  const outOfMarket = top3.length < 3;
+  results = results.map(r => ({
+    ...r,
+    invested: invested.includes(r.name),
+    excludedEM: r.name === excludedEM
+  }));
 
   const output = {
     updated: new Date().toISOString(),
-    outOfMarket,
-    top3,
-    table: results
+    table: results,
+    invested
   };
 
   fs.writeFileSync(
@@ -124,22 +137,21 @@ async function run() {
     JSON.stringify(output, null, 2)
   );
 
-  console.log("signals updated");
+  await sendDiscord(invested);
 
-  await sendDiscord(top3, outOfMarket);
-
+  console.log("DONE");
 }
 
-async function sendDiscord(top3, outOfMarket) {
+async function sendDiscord(invested) {
 
   if (!process.env.GTAA_WEBHOOK) {
-    console.log("No Discord webhook");
+    console.log("No webhook");
     return;
   }
 
-  const text = top3.map((t, i) =>
-    `#${i + 1} ${t.name} | Momentum ${(t.momentum * 100).toFixed(2)}%`
-  ).join("\n");
+  const text = invested
+    .map((a, i) => `#${i + 1} ${a}`)
+    .join("\n");
 
   await fetch(process.env.GTAA_WEBHOOK, {
     method: "POST",
@@ -148,13 +160,9 @@ async function sendDiscord(top3, outOfMarket) {
     },
     body: JSON.stringify({
       content:
-        `📊 GTAA Daily Signals\n\n` +
-        `${text}\n\n` +
-        `${outOfMarket ? "⚠️ OUT OF MARKET / XEON" : "✅ INVESTED"}`
+        `📊 GTAA Signale\n\n${text}`
     })
   });
-
-  console.log("discord sent");
 }
 
 run();
