@@ -3,11 +3,12 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>3x GTAA Dashboard</title>
 
   <style>
+
     body {
       background: #0d1117;
       color: white;
@@ -15,17 +16,20 @@
       padding: 20px;
     }
 
-    h1 {
+    h1, h2 {
       margin-bottom: 20px;
+      margin-top: 40px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
+      margin-bottom: 40px;
       background: #161b22;
     }
 
-    th, td {
+    th,
+    td {
       padding: 12px;
       border-bottom: 1px solid #30363d;
       text-align: center;
@@ -39,15 +43,26 @@
       background: #1f2937;
     }
 
-    .valid {
+    .green {
       color: #00ff88;
       font-weight: bold;
     }
 
-    .out {
-      color: #ff4d4d;
+    .red {
+      color: #ff5c5c;
       font-weight: bold;
     }
+
+    .invested {
+      background: #2457c5;
+    }
+
+    .excluded {
+      background: #6aa8ff;
+      color: black;
+      font-weight: bold;
+    }
+
   </style>
 </head>
 
@@ -56,19 +71,42 @@
   <h1>📊 3x GTAA Dashboard</h1>
 
   <table>
+
     <thead>
       <tr>
         <th>Rank</th>
         <th>Asset</th>
-        <th>Preis</th>
-        <th>Momentum</th>
-        <th>SMA150</th>
-        <th>SMA5>SMA150</th>
-        <th>Status</th>
+        <th>1M</th>
+        <th>3M</th>
+        <th>6M</th>
+        <th>9M</th>
+        <th>Momentumscore (%)</th>
+        <th>SMA150 (%)</th>
+        <th>SMA20>SMA150 (%)</th>
       </tr>
     </thead>
 
     <tbody id="table"></tbody>
+
+  </table>
+
+  <h2>📈 Historische Kurse</h2>
+
+  <table>
+
+    <thead>
+      <tr>
+        <th>Asset</th>
+        <th>Preis vor 1M</th>
+        <th>Preis vor 3M</th>
+        <th>Preis vor 6M</th>
+        <th>Preis vor 9M</th>
+        <th>Aktuell</th>
+      </tr>
+    </thead>
+
+    <tbody id="prices"></tbody>
+
   </table>
 
   <script src="app.js"></script>
