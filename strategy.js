@@ -7,7 +7,7 @@ const assets = [
   { name: "Bitcoin", symbol: "BTC-EUR", type: "BTC" },
   { name: "Bonds", symbol: "IUSV.DE", type: "BONDS" },
   { name: "Gold", symbol: "GBSE.MI", type: "GOLD" },
-  { name: "WTI Oil", symbol: "00XM.DE", type: "OIL" },
+  { name: "WTI Oil", symbol: "00XM.SG", type: "OIL" },
   { name: "USD/EUR", symbol: "USDEUR=X", type: "USDLONG" },
   { name: "EUR/USD", symbol: "EURUSD=X", type: "USDSHORT" }
 ];
