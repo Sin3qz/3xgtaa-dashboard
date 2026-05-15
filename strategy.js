@@ -1,18 +1,64 @@
 const fs = require("fs");
 
 const assets = [
-  { name: "Nasdaq 100", symbol: "^NDX", type: "NASDAQ" },
-  { name: "EuroStoxx50", symbol: "^STOXX50E", type: "EU" },
-  { name: "Emerging Markets", symbol: "EEM", type: "EM" },
-  { name: "Bitcoin", symbol: "BTC-EUR", type: "BTC" },
-  { name: "Gold", symbol: "GC=F", type: "GOLD" },
-  { name: "Bonds", symbol: "TLT", type: "BONDS" },
-  { name: "WTI Oil", symbol: "CL=F", type: "OIL" },
-  { name: "USD/EUR", symbol: "USDEUR=X", type: "USDLONG" },
-  { name: "EUR/USD", symbol: "EURUSD=X", type: "USDSHORT" }
+
+  {
+    name: "Nasdaq 100 EUR Hedged",
+    symbol: "NQSE.DE",
+    type: "NASDAQ"
+  },
+
+  {
+    name: "EuroStoxx50",
+    symbol: "LYSX.DE",
+    type: "EU"
+  },
+
+  {
+    name: "Emerging Markets EUR Hedged",
+    symbol: "EUNM.DE",
+    type: "EM"
+  },
+
+  {
+    name: "Bitcoin EUR",
+    symbol: "BTC-EUR",
+    type: "BTC"
+  },
+
+  {
+    name: "Bonds EUR Hedged",
+    symbol: "IUSV.DE",
+    type: "BONDS"
+  },
+
+  {
+    name: "Gold EUR Hedged",
+    symbol: "GBSE.MI",
+    type: "GOLD"
+  },
+
+  {
+    name: "WTI Oil EUR Hedged",
+    symbol: "00XM.SG",
+    type: "OIL"
+  },
+
+  {
+    name: "USD Long / EUR Short",
+    symbol: "USDEUR=X",
+    type: "USDLONG"
+  },
+
+  {
+    name: "EUR Long / USD Short",
+    symbol: "EURUSD=X",
+    type: "USDSHORT"
+  }
 ];
 
 async function fetchData(symbol) {
+
   const url =
     `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=2y&interval=1d`;
 
@@ -28,7 +74,9 @@ function pct(a, b) {
 }
 
 function sma(p, len) {
+
   const slice = p.slice(-len);
+
   return slice.reduce((a, b) => a + b, 0) / len;
 }
 
@@ -62,6 +110,7 @@ async function run() {
       const sma20Pct = pct(sma20, sma150);
 
       results.push({
+
         name: a.name,
         symbol: a.symbol,
         type: a.type,
@@ -86,57 +135,56 @@ async function run() {
       });
 
     } catch (e) {
+
       console.log("ERROR", a.name);
     }
   }
 
-  // Momentum sortieren
+  // Nach Momentum sortieren
   results.sort((a, b) => b.momentum - a.momentum);
 
-  // Nummern vergeben
+  // Ranking vergeben
   results = results.map((r, idx) => ({
     ...r,
     rank: idx + 1
   }));
 
-  // Nur gültige
+  // Nur gültige Assets
   let valid = results.filter(r => r.valid);
 
- // EU vs EM Regel
-const eu = valid.find(v => v.type === "EU");
-const em = valid.find(v => v.type === "EM");
+  // EM separat markieren
+  let excludedEM = null;
 
-let excludedEM = null;
+  const em = valid.find(v => v.type === "EM");
 
-if (eu && em) {
-
-  if (eu.momentum >= em.momentum) {
-
+  if (em) {
     excludedEM = em.name;
-
-  } else {
-
-    excludedEM = em.name;
-
   }
-}
 
-// Finale Investments OHNE EM
-const investCandidates = valid.filter(v => v.type !== "EM");
+  // Investments OHNE EM
+  const investCandidates =
+    valid.filter(v => v.type !== "EM");
 
-const invested = investCandidates
-  .slice(0, 3)
-  .map(v => v.name);
+  const invested =
+    investCandidates
+      .slice(0, 3)
+      .map(v => v.name);
 
   results = results.map(r => ({
+
     ...r,
+
     invested: invested.includes(r.name),
+
     excludedEM: r.name === excludedEM
   }));
 
   const output = {
+
     updated: new Date().toISOString(),
+
     table: results,
+
     invested
   };
 
@@ -153,20 +201,27 @@ const invested = investCandidates
 async function sendDiscord(invested) {
 
   if (!process.env.GTAA_WEBHOOK) {
+
     console.log("No webhook");
+
     return;
   }
 
-  const text = invested
-    .map((a, i) => `#${i + 1} ${a}`)
-    .join("\n");
+  const text =
+    invested
+      .map((a, i) => `#${i + 1} ${a}`)
+      .join("\n");
 
   await fetch(process.env.GTAA_WEBHOOK, {
+
     method: "POST",
+
     headers: {
       "Content-Type": "application/json"
     },
+
     body: JSON.stringify({
+
       content:
         `📊 GTAA Signale\n\n${text}`
     })
