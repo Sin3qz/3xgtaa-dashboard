@@ -27,31 +27,31 @@ async function load() {
         <td>${d.name}</td>
 
         <td class="${d.m1 >= 0 ? 'green' : 'red'}">
-          ${d.m1.toFixed(2)}%
+          ${d.m1.toFixed(2)}
         </td>
 
         <td class="${d.m3 >= 0 ? 'green' : 'red'}">
-          ${d.m3.toFixed(2)}%
+          ${d.m3.toFixed(2)}
         </td>
 
         <td class="${d.m6 >= 0 ? 'green' : 'red'}">
-          ${d.m6.toFixed(2)}%
+          ${d.m6.toFixed(2)}
         </td>
 
         <td class="${d.m9 >= 0 ? 'green' : 'red'}">
-          ${d.m9.toFixed(2)}%
+          ${d.m9.toFixed(2)}
         </td>
 
         <td class="${d.momentum >= 0 ? 'green' : 'red'}">
-          ${d.momentum.toFixed(2)}%
+          ${d.momentum.toFixed(2)}
         </td>
 
         <td class="${d.sma150Pct >= 0 ? 'green' : 'red'}">
-          ${d.sma150Pct.toFixed(2)}%
+          ${d.sma150Pct.toFixed(2)}
         </td>
 
         <td class="${d.sma20Pct >= 0 ? 'green' : 'red'}">
-          ${d.sma20Pct.toFixed(2)}%
+          ${d.sma20Pct.toFixed(2)}
         </td>
       </tr>
     `;
