@@ -1,60 +1,15 @@
 const fs = require("fs");
 
 const assets = [
-
-  {
-    name: "Nasdaq 100 EUR Hedged",
-    symbol: "NQSE.DE",
-    type: "NASDAQ"
-  },
-
-  {
-    name: "EuroStoxx50",
-    symbol: "LYSX.DE",
-    type: "EU"
-  },
-
-  {
-    name: "Emerging Markets EUR Hedged",
-    symbol: "EUNM.DE",
-    type: "EM"
-  },
-
-  {
-    name: "Bitcoin EUR",
-    symbol: "BTC-EUR",
-    type: "BTC"
-  },
-
-  {
-    name: "Bonds EUR Hedged",
-    symbol: "IUSV.DE",
-    type: "BONDS"
-  },
-
-  {
-    name: "Gold EUR Hedged",
-    symbol: "GBSE.MI",
-    type: "GOLD"
-  },
-
-  {
-    name: "WTI Oil EUR Hedged",
-    symbol: "00XM.SG",
-    type: "OIL"
-  },
-
-  {
-    name: "USD Long / EUR Short",
-    symbol: "USDEUR=X",
-    type: "USDLONG"
-  },
-
-  {
-    name: "EUR Long / USD Short",
-    symbol: "EURUSD=X",
-    type: "USDSHORT"
-  }
+  { name: "Nasdaq 100", symbol: "NQSE.DE", type: "NASDAQ" },
+  { name: "EuroStoxx50", symbol: "LYSX.DE", type: "EU" },
+  { name: "Emerging Markets", symbol: "EUNM.DE", type: "EM" },
+  { name: "Bitcoin", symbol: "BTC-EUR", type: "BTC" },
+  { name: "Bonds", symbol: "IUSV.DE", type: "BONDS" },
+  { name: "Gold", symbol: "GBSE.MI", type: "GOLD" },
+  { name: "WTI Oil", symbol: "00XM.DE", type: "OIL" },
+  { name: "USD/EUR", symbol: "USDEUR=X", type: "USDLONG" },
+  { name: "EUR/USD", symbol: "EURUSD=X", type: "USDSHORT" }
 ];
 
 async function fetchData(symbol) {
