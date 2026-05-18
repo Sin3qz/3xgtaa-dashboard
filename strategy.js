@@ -155,9 +155,11 @@ async function run() {
 
 async function sendDiscord(invested) {
 
+  console.log("Discord test started");
+
   if (!process.env.GTAA_WEBHOOK) {
 
-    console.log("No webhook");
+    console.log("NO WEBHOOK FOUND");
 
     return;
   }
@@ -167,7 +169,7 @@ async function sendDiscord(invested) {
       .map((a, i) => `#${i + 1} ${a}`)
       .join("\n");
 
-  await fetch(process.env.GTAA_WEBHOOK, {
+  const response = await fetch(process.env.GTAA_WEBHOOK, {
 
     method: "POST",
 
@@ -181,6 +183,8 @@ async function sendDiscord(invested) {
         `📊 GTAA Signale\n\n${text}`
     })
   });
+
+  console.log("Discord status:", response.status);
 }
 
 run();
