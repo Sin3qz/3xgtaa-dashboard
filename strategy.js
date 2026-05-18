@@ -86,7 +86,10 @@ async function run() {
         sma150Pct,
         sma20Pct,
 
-        valid: momentum > 0 && current > sma150 && sma20 > sma150
+        valid:
+          momentum > 0 &&
+          current > sma150 &&
+          sma20 > sma150
       });
 
     } catch (e) {
@@ -148,12 +151,12 @@ async function run() {
     JSON.stringify(output, null, 2)
   );
 
-  await sendDiscord(invested);
+  await sendDiscord(invested, results);
 
   console.log("DONE");
 }
 
-async function sendDiscord(invested) {
+async function sendDiscord(invested, results) {
 
   console.log("Discord test started");
 
@@ -164,10 +167,21 @@ async function sendDiscord(invested) {
     return;
   }
 
-  const text =
-    invested
-      .map((a, i) => `#${i + 1} ${a}`)
-      .join("\n");
+  const lines = results.map(r => {
+
+    const marker =
+      r.invested ? "🔵" :
+      r.excludedEM ? "🔹" :
+      "⚪";
+
+    return (
+      `${marker} #${r.rank} ${r.name}\n` +
+      `Momentum: ${r.momentum.toFixed(2)} | ` +
+      `SMA150: ${r.sma150Pct.toFixed(2)} | ` +
+      `SMA20>SMA150: ${r.sma20Pct.toFixed(2)}`
+    );
+
+  }).join("\n\n");
 
   const response = await fetch(process.env.GTAA_WEBHOOK, {
 
@@ -180,7 +194,10 @@ async function sendDiscord(invested) {
     body: JSON.stringify({
 
       content:
-        `📊 GTAA Signale\n\n${text}`
+        `📊 GTAA Signale\n\n` +
+        `${lines}\n\n` +
+        `🔵 = investiert\n` +
+        `🔹 = EM nur Signal, nicht investiert`
     })
   });
 
