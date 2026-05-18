@@ -6,7 +6,7 @@ const assets = [
   { name: "Emerging Markets", symbol: "EUNM.DE", type: "EM" },
   { name: "Bitcoin", symbol: "BTC-EUR", type: "BTC" },
   { name: "Bonds", symbol: "IUSV.DE", type: "BONDS" },
-  { name: "Gold", symbol: "GBSE.MI", type: "GOLD" },
+  { name: "Gold", symbol: "XAD1.DE", type: "GOLD" },
   { name: "WTI Oil", symbol: "ECRD.MI", type: "OIL" },
   { name: "USD/EUR", symbol: "USDEUR=X", type: "USDLONG" },
   { name: "EUR/USD", symbol: "EURUSD=X", type: "USDSHORT" }
