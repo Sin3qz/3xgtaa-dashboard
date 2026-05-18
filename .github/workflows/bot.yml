@@ -2,12 +2,15 @@ name: GTAA Bot
 
 on:
   schedule:
-    - cron: "0 6 * * *"  # jeden Tag 06:00
+    - cron: "0 6 * * *"
   workflow_dispatch:
 
 jobs:
   run:
     runs-on: ubuntu-latest
+
+    env:
+      GTAA_WEBHOOK: ${{ secrets.GTAA_WEBHOOK }}
 
     steps:
       - uses: actions/checkout@v4
