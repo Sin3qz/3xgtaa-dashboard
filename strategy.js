@@ -86,7 +86,7 @@ async function run() {
         sma150Pct,
         sma20Pct,
 
-        valid: momentum > 0 && current > sma150
+        valid: momentum > 0 && current > sma150 && sma20 > sma150
       });
 
     } catch (e) {
