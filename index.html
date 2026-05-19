@@ -8,7 +8,6 @@
   <title>3x GTAA Dashboard</title>
 
   <style>
-
     body {
       background: #0d1117;
       color: white;
@@ -16,9 +15,31 @@
       padding: 20px;
     }
 
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+    }
+
     h1, h2 {
       margin-bottom: 20px;
       margin-top: 40px;
+    }
+
+    .tips-box {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 12px 18px;
+      min-width: 150px;
+      text-align: right;
+      font-weight: bold;
+    }
+
+    .tips-title {
+      color: #8ec5ff;
+      margin-bottom: 6px;
     }
 
     table {
@@ -56,22 +77,21 @@
     .invested {
       background: #2457c5;
     }
-
-    .excluded {
-      background: #8ec5ff;
-      color: black;
-      font-weight: bold;
-    }
-
   </style>
 </head>
 
 <body>
 
-  <h1>📊 3x GTAA Dashboard</h1>
+  <div class="header">
+    <h1>📊 3x GTAA Dashboard</h1>
+
+    <div id="tipsBox" class="tips-box">
+      <div class="tips-title">TIPS</div>
+      <div>Lädt...</div>
+    </div>
+  </div>
 
   <table>
-
     <thead>
       <tr>
         <th>Rank</th>
@@ -87,13 +107,11 @@
     </thead>
 
     <tbody id="table"></tbody>
-
   </table>
 
   <h2>📈 Historische Kurse</h2>
 
   <table>
-
     <thead>
       <tr>
         <th>Asset</th>
@@ -106,7 +124,6 @@
     </thead>
 
     <tbody id="prices"></tbody>
-
   </table>
 
   <script src="app.js"></script>
