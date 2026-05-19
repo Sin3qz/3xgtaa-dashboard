@@ -1,5 +1,9 @@
 {
-  "lastRebalance": null,
-  "invested": [],
-  "pairHolding": null
+  "lastRebalance": "2026-05-19T16:20:57.308Z",
+  "invested": [
+    "WTI Oil",
+    "Emerging Markets",
+    "Nasdaq 100"
+  ],
+  "pairHolding": "EM"
 }
