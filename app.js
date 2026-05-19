@@ -14,7 +14,7 @@ async function load() {
       <div class="tips-title">TIPS</div>
       <div>SMA200: ${data.tips.sma200.toFixed(2)}</div>
       <div class="${data.tips.sma200Pct >= 0 ? "green" : "red"}">
-        ${data.tips.sma200Pct.toFixed(2)}
+        ${data.tips.sma200Pct >= 0 ? "+" : ""}${data.tips.sma200Pct.toFixed(2)}% ${data.tips.sma200Pct >= 0 ? "über SMA200" : "unter SMA200"}
       </div>
     `;
   }
