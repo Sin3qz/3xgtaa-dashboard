@@ -1,5 +1,7 @@
 const fs = require("fs");
 
+const STATE_FILE = "state.json";
+
 const assets = [
   { name: "Nasdaq 100", symbol: "NQSE.DE", type: "NASDAQ" },
   { name: "EuroStoxx50", symbol: "LYSX.DE", type: "EU" },
@@ -13,12 +15,14 @@ const assets = [
 ];
 
 async function fetchData(symbol) {
-
-  const url =
-    `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=2y&interval=1d`;
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=2y&interval=1d`;
 
   const res = await fetch(url);
   const json = await res.json();
+
+  if (!json.chart || !json.chart.result || !json.chart.result[0]) {
+    throw new Error(`No data for ${symbol}`);
+  }
 
   return json.chart.result[0].indicators.quote[0].close
     .filter(v => v !== null);
@@ -29,26 +33,114 @@ function pct(a, b) {
 }
 
 function sma(p, len) {
-
   const slice = p.slice(-len);
-
   return slice.reduce((a, b) => a + b, 0) / len;
 }
 
-async function run() {
+function loadState() {
+  if (!fs.existsSync(STATE_FILE)) {
+    return null;
+  }
 
+  return JSON.parse(fs.readFileSync(STATE_FILE, "utf8"));
+}
+
+function saveState(state) {
+  fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
+}
+
+function isFirstBusinessDay(date) {
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth();
+
+  let d = new Date(Date.UTC(year, month, 1));
+
+  while (d.getUTCDay() === 0 || d.getUTCDay() === 6) {
+    d.setUTCDate(d.getUTCDate() + 1);
+  }
+
+  return date.toISOString().slice(0, 10) === d.toISOString().slice(0, 10);
+}
+
+function buildInvestments(results, previousPairType) {
+  const eligible = results.filter(r => r.valid);
+
+  const rawTop3 = eligible.slice(0, 3);
+
+  const eu = eligible.find(r => r.type === "EU");
+  const em = eligible.find(r => r.type === "EM");
+
+  let forcedPair = null;
+
+  if (previousPairType === "EU" && eu && em) {
+    const emInTop3 = rawTop3.some(r => r.type === "EM");
+
+    if (emInTop3 && eu.rank <= 4 && eu.valid) {
+      forcedPair = eu;
+    }
+  }
+
+  if (previousPairType === "EM" && eu && em) {
+    const euInTop3 = rawTop3.some(r => r.type === "EU");
+
+    if (euInTop3 && em.rank <= 4 && em.valid) {
+      forcedPair = em;
+    }
+  }
+
+  let selected = [];
+
+  if (forcedPair) {
+    selected.push(forcedPair);
+  }
+
+  for (const asset of eligible) {
+    if (selected.length >= 3) break;
+
+    if (selected.some(s => s.name === asset.name)) continue;
+
+    const alreadyHasEU = selected.some(s => s.type === "EU");
+    const alreadyHasEM = selected.some(s => s.type === "EM");
+
+    if (asset.type === "EU" && alreadyHasEM) continue;
+    if (asset.type === "EM" && alreadyHasEU) continue;
+
+    selected.push(asset);
+  }
+
+  return selected.slice(0, 3);
+}
+
+async function getTipsData() {
+  const prices = await fetchData("TIP");
+
+  const current = prices.at(-1);
+  const sma200 = sma(prices, 200);
+  const sma200Pct = pct(current, sma200);
+
+  return {
+    symbol: "TIP",
+    current,
+    sma200,
+    sma200Pct
+  };
+}
+
+async function run() {
   let results = [];
 
   for (const a of assets) {
-
     try {
+      console.log(`Loading ${a.name}`);
 
       const prices = await fetchData(a.symbol);
 
-      if (!prices || prices.length < 200) continue;
+      if (!prices || prices.length < 200) {
+        console.log(`Not enough data: ${a.name}`);
+        continue;
+      }
 
       const i = prices.length - 1;
-
       const current = prices[i];
 
       const m1 = pct(current, prices[i - 21]);
@@ -65,12 +157,12 @@ async function run() {
       const sma20Pct = pct(sma20, sma150);
 
       results.push({
-
         name: a.name,
         symbol: a.symbol,
         type: a.type,
 
         current,
+
         p1m: prices[i - 21],
         p3m: prices[i - 63],
         p6m: prices[i - 126],
@@ -93,56 +185,68 @@ async function run() {
       });
 
     } catch (e) {
-
-      console.log("ERROR", a.name);
+      console.log(`ERROR ${a.name}`);
+      console.log(e.message);
     }
   }
 
-  // Nach Momentum sortieren
   results.sort((a, b) => b.momentum - a.momentum);
 
-  // Ranking vergeben
   results = results.map((r, idx) => ({
     ...r,
     rank: idx + 1
   }));
 
-  // Nur gültige Assets
-  let valid = results.filter(r => r.valid);
+  const today = new Date();
+  const state = loadState();
 
-  // EM separat markieren
-  let excludedEM = null;
+  let invested = [];
+  let pairHolding = state?.pairHolding || null;
 
-  const em = valid.find(v => v.type === "EM");
+  const shouldRebalance =
+    !state ||
+    !state.invested ||
+    state.invested.length === 0 ||
+    isFirstBusinessDay(today);
 
-  if (em) {
-    excludedEM = em.name;
+  if (shouldRebalance) {
+    const selected = buildInvestments(results, pairHolding);
+
+    invested = selected.map(r => r.name);
+
+    const selectedPair = selected.find(r => r.type === "EU" || r.type === "EM");
+    pairHolding = selectedPair ? selectedPair.type : null;
+
+    saveState({
+      lastRebalance: today.toISOString(),
+      invested,
+      pairHolding
+    });
+
+  } else {
+    invested = state.invested || [];
   }
 
-  // Investments OHNE EM
-  const investCandidates =
-    valid.filter(v => v.type !== "EM");
-
-  const invested =
-    investCandidates
-      .slice(0, 3)
-      .map(v => v.name);
-
   results = results.map(r => ({
-
     ...r,
-
     invested: invested.includes(r.name),
-
-    excludedEM: r.name === excludedEM
+    excludedEM: false
   }));
 
+  let tips = null;
+
+  try {
+    tips = await getTipsData();
+  } catch (e) {
+    console.log("ERROR TIPS");
+    console.log(e.message);
+  }
+
   const output = {
-
-    updated: new Date().toISOString(),
-
+    updated: today.toISOString(),
+    rebalanceToday: shouldRebalance,
+    tips,
     table: results,
-
     invested
   };
 
@@ -151,28 +255,25 @@ async function run() {
     JSON.stringify(output, null, 2)
   );
 
-  await sendDiscord(invested, results);
+  await sendDiscord(results, tips);
 
   console.log("DONE");
 }
 
-async function sendDiscord(invested, results) {
-
+async function sendDiscord(results, tips) {
   console.log("Discord test started");
 
   if (!process.env.GTAA_WEBHOOK) {
-
     console.log("NO WEBHOOK FOUND");
-
     return;
   }
 
-  const lines = results.map(r => {
+  const tipsText = tips
+    ? `\n\nTIPS SMA200: ${tips.sma200.toFixed(2)} | Abstand: ${tips.sma200Pct.toFixed(2)}`
+    : "";
 
-    const marker =
-      r.invested ? "🔵" :
-      r.excludedEM ? "🔹" :
-      "⚪";
+  const lines = results.map(r => {
+    const marker = r.invested ? "🔵" : "⚪";
 
     return (
       `${marker} #${r.rank} ${r.name}\n` +
@@ -180,24 +281,18 @@ async function sendDiscord(invested, results) {
       `SMA150: ${r.sma150Pct.toFixed(2)} | ` +
       `SMA20>SMA150: ${r.sma20Pct.toFixed(2)}`
     );
-
   }).join("\n\n");
 
   const response = await fetch(process.env.GTAA_WEBHOOK, {
-
     method: "POST",
-
     headers: {
       "Content-Type": "application/json"
     },
-
     body: JSON.stringify({
-
       content:
-        `📊 GTAA Signale\n\n` +
+        `📊 GTAA Signale${tipsText}\n\n` +
         `${lines}\n\n` +
-        `🔵 = investiert\n` +
-        `🔹 = EM nur Signal, nicht investiert`
+        `🔵 = investiert`
     })
   });
 
