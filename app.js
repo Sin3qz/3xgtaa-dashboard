@@ -1,24 +1,29 @@
 async function load() {
-
   const res = await fetch("signals.json");
   const data = await res.json();
 
   const table = document.getElementById("table");
   const prices = document.getElementById("prices");
+  const tipsBox = document.getElementById("tipsBox");
 
   table.innerHTML = "";
   prices.innerHTML = "";
 
-  data.table.forEach(d => {
+  if (data.tips) {
+    tipsBox.innerHTML = `
+      <div class="tips-title">TIPS</div>
+      <div>SMA200: ${data.tips.sma200.toFixed(2)}</div>
+      <div class="${data.tips.sma200Pct >= 0 ? "green" : "red"}">
+        ${data.tips.sma200Pct.toFixed(2)}
+      </div>
+    `;
+  }
 
+  data.table.forEach(d => {
     let rowClass = "";
 
     if (d.invested) {
       rowClass = "invested";
-    }
-
-    if (d.excludedEM) {
-      rowClass = "excluded";
     }
 
     table.innerHTML += `
@@ -26,33 +31,13 @@ async function load() {
         <td>${d.rank}</td>
         <td>${d.name}</td>
 
-        <td class="${d.m1 >= 0 ? 'green' : 'red'}">
-          ${d.m1.toFixed(2)}
-        </td>
-
-        <td class="${d.m3 >= 0 ? 'green' : 'red'}">
-          ${d.m3.toFixed(2)}
-        </td>
-
-        <td class="${d.m6 >= 0 ? 'green' : 'red'}">
-          ${d.m6.toFixed(2)}
-        </td>
-
-        <td class="${d.m9 >= 0 ? 'green' : 'red'}">
-          ${d.m9.toFixed(2)}
-        </td>
-
-        <td class="${d.momentum >= 0 ? 'green' : 'red'}">
-          ${d.momentum.toFixed(2)}
-        </td>
-
-        <td class="${d.sma150Pct >= 0 ? 'green' : 'red'}">
-          ${d.sma150Pct.toFixed(2)}
-        </td>
-
-        <td class="${d.sma20Pct >= 0 ? 'green' : 'red'}">
-          ${d.sma20Pct.toFixed(2)}
-        </td>
+        <td class="${d.m1 >= 0 ? 'green' : 'red'}">${d.m1.toFixed(2)}</td>
+        <td class="${d.m3 >= 0 ? 'green' : 'red'}">${d.m3.toFixed(2)}</td>
+        <td class="${d.m6 >= 0 ? 'green' : 'red'}">${d.m6.toFixed(2)}</td>
+        <td class="${d.m9 >= 0 ? 'green' : 'red'}">${d.m9.toFixed(2)}</td>
+        <td class="${d.momentum >= 0 ? 'green' : 'red'}">${d.momentum.toFixed(2)}</td>
+        <td class="${d.sma150Pct >= 0 ? 'green' : 'red'}">${d.sma150Pct.toFixed(2)}</td>
+        <td class="${d.sma20Pct >= 0 ? 'green' : 'red'}">${d.sma20Pct.toFixed(2)}</td>
       </tr>
     `;
 
