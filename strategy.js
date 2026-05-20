@@ -116,7 +116,7 @@ async function getTipsData() {
 
   const current = prices.at(-1);
   const sma200 = sma(prices, 200);
-  const sma200Pct = pct(current, sma200);
+  const sma200Pct = ((current / sma200) - 1) * 100;
 
   return {
     symbol: "TIP",
