@@ -15,18 +15,13 @@ const assets = [
 ];
 
 async function fetchData(symbol) {
-
   const url =
     `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=2y&interval=1d&events=history`;
 
   const res = await fetch(url);
   const json = await res.json();
 
-  if (
-    !json.chart ||
-    !json.chart.result ||
-    !json.chart.result[0]
-  ) {
+  if (!json.chart || !json.chart.result || !json.chart.result[0]) {
     throw new Error(`No data for ${symbol}`);
   }
 
@@ -37,11 +32,9 @@ async function fetchData(symbol) {
     result.indicators.adjclose[0] &&
     result.indicators.adjclose[0].adjclose;
 
-  const close =
-    result.indicators.quote[0].close;
+  const close = result.indicators.quote[0].close;
 
-  return (adjusted || close)
-    .filter(v => v !== null);
+  return (adjusted || close).filter(v => v !== null);
 }
 
 function pct(a, b) {
@@ -49,134 +42,70 @@ function pct(a, b) {
 }
 
 function sma(p, len) {
-
   const slice = p.slice(-len);
-
   return slice.reduce((a, b) => a + b, 0) / len;
 }
 
 function loadState() {
-
-  if (!fs.existsSync(STATE_FILE)) {
-    return null;
-  }
-
-  return JSON.parse(
-    fs.readFileSync(STATE_FILE, "utf8")
-  );
+  if (!fs.existsSync(STATE_FILE)) return null;
+  return JSON.parse(fs.readFileSync(STATE_FILE, "utf8"));
 }
 
 function saveState(state) {
-
-  fs.writeFileSync(
-    STATE_FILE,
-    JSON.stringify(state, null, 2)
-  );
+  fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
 }
 
 function isFirstBusinessDay(date) {
-
   const year = date.getUTCFullYear();
   const month = date.getUTCMonth();
 
   let d = new Date(Date.UTC(year, month, 1));
 
-  while (
-    d.getUTCDay() === 0 ||
-    d.getUTCDay() === 6
-  ) {
+  while (d.getUTCDay() === 0 || d.getUTCDay() === 6) {
     d.setUTCDate(d.getUTCDate() + 1);
   }
 
-  return (
-    date.toISOString().slice(0, 10) ===
-    d.toISOString().slice(0, 10)
-  );
+  return date.toISOString().slice(0, 10) === d.toISOString().slice(0, 10);
 }
 
 function buildInvestments(results, previousPairType) {
+  const eligible = results.filter(r => r.valid);
+  const rawTop3 = eligible.slice(0, 3);
 
-  const eligible =
-    results.filter(r => r.valid);
-
-  const rawTop3 =
-    eligible.slice(0, 3);
-
-  const eu =
-    eligible.find(r => r.type === "EU");
-
-  const em =
-    eligible.find(r => r.type === "EM");
+  const eu = eligible.find(r => r.type === "EU");
+  const em = eligible.find(r => r.type === "EM");
 
   let forcedPair = null;
 
-  if (
-    previousPairType === "EU" &&
-    eu &&
-    em
-  ) {
+  if (previousPairType === "EU" && eu && em) {
+    const emInTop3 = rawTop3.some(r => r.type === "EM");
 
-    const emInTop3 =
-      rawTop3.some(r => r.type === "EM");
-
-    if (
-      emInTop3 &&
-      eu.rank <= 4 &&
-      eu.valid
-    ) {
+    if (emInTop3 && eu.rank <= 4 && eu.valid) {
       forcedPair = eu;
     }
   }
 
-  if (
-    previousPairType === "EM" &&
-    eu &&
-    em
-  ) {
+  if (previousPairType === "EM" && eu && em) {
+    const euInTop3 = rawTop3.some(r => r.type === "EU");
 
-    const euInTop3 =
-      rawTop3.some(r => r.type === "EU");
-
-    if (
-      euInTop3 &&
-      em.rank <= 4 &&
-      em.valid
-    ) {
+    if (euInTop3 && em.rank <= 4 && em.valid) {
       forcedPair = em;
     }
   }
 
   let selected = [];
 
-  if (forcedPair) {
-    selected.push(forcedPair);
-  }
+  if (forcedPair) selected.push(forcedPair);
 
   for (const asset of eligible) {
-
     if (selected.length >= 3) break;
+    if (selected.some(s => s.name === asset.name)) continue;
 
-    if (
-      selected.some(
-        s => s.name === asset.name
-      )
-    ) continue;
+    const alreadyHasEU = selected.some(s => s.type === "EU");
+    const alreadyHasEM = selected.some(s => s.type === "EM");
 
-    const alreadyHasEU =
-      selected.some(s => s.type === "EU");
-
-    const alreadyHasEM =
-      selected.some(s => s.type === "EM");
-
-    if (
-      asset.type === "EU" &&
-      alreadyHasEM
-    ) continue;
-
-    if (
-      asset.type === "EM" &&
-      alreadyHasEU
-    ) continue;
+    if (asset.type === "EU" && alreadyHasEM) continue;
+    if (asset.type === "EM" && alreadyHasEU) continue;
 
     selected.push(asset);
   }
@@ -185,18 +114,11 @@ function buildInvestments(results, previousPairType) {
 }
 
 async function getTipsData() {
+  const prices = await fetchData("TIP");
 
-  const prices =
-    await fetchData("TIP");
-
-  const current =
-    prices.at(-1);
-
-  const sma200 =
-    sma(prices, 200);
-
-  const sma200Pct =
-    ((current / sma200) - 1) * 100;
+  const current = prices.at(-1);
+  const sma200 = sma(prices, 200);
+  const sma200Pct = ((current / sma200) - 1) * 100;
 
   return {
     symbol: "TIP",
@@ -207,18 +129,11 @@ async function getTipsData() {
 }
 
 async function getSpyData() {
+  const prices = await fetchData("^SP500TR");
 
-  const prices =
-    await fetchData("^SP500TR");
-
-  const current =
-    prices.at(-1);
-
-  const sma150 =
-    sma(prices, 150);
-
-  const sma150Pct =
-    ((current / sma150) - 1) * 100;
+  const current = prices.at(-1);
+  const sma150 = sma(prices, 150);
+  const sma150Pct = ((current / sma150) - 1) * 100;
 
   return {
     symbol: "^SP500TR",
@@ -229,63 +144,36 @@ async function getSpyData() {
 }
 
 async function run() {
-
   let results = [];
 
   for (const a of assets) {
-
     try {
-
       console.log(`Loading ${a.name}`);
 
-      const prices =
-        await fetchData(a.symbol);
+      const prices = await fetchData(a.symbol);
 
-      if (
-        !prices ||
-        prices.length < 200
-      ) {
-        console.log(
-          `Not enough data: ${a.name}`
-        );
+      if (!prices || prices.length < 200) {
+        console.log(`Not enough data: ${a.name}`);
         continue;
       }
 
-      const i =
-        prices.length - 1;
+      const i = prices.length - 1;
+      const current = prices[i];
 
-      const current =
-        prices[i];
+      const m1 = pct(current, prices[i - 21]);
+      const m3 = pct(current, prices[i - 63]);
+      const m6 = pct(current, prices[i - 126]);
+      const m9 = pct(current, prices[i - 189]);
 
-      const m1 =
-        pct(current, prices[i - 21]);
+      const momentum = m1 + m3 + m6 + m9;
 
-      const m3 =
-        pct(current, prices[i - 63]);
+      const sma150 = sma(prices, 150);
+      const sma20 = sma(prices, 20);
 
-      const m6 =
-        pct(current, prices[i - 126]);
-
-      const m9 =
-        pct(current, prices[i - 189]);
-
-      const momentum =
-        m1 + m3 + m6 + m9;
-
-      const sma150 =
-        sma(prices, 150);
-
-      const sma20 =
-        sma(prices, 20);
-
-      const sma150Pct =
-        pct(current, sma150);
-
-      const sma20Pct =
-        pct(sma20, sma150);
+      const sma150Pct = pct(current, sma150);
+      const sma20Pct = pct(sma20, sma150);
 
       results.push({
-
         name: a.name,
         symbol: a.symbol,
         type: a.type,
@@ -314,33 +202,23 @@ async function run() {
       });
 
     } catch (e) {
-
       console.log(`ERROR ${a.name}`);
       console.log(e.message);
     }
   }
 
-  // Sortierung
-  results.sort(
-    (a, b) => b.momentum - a.momentum
-  );
+  results.sort((a, b) => b.momentum - a.momentum);
 
-  // Ranking
   results = results.map((r, idx) => ({
     ...r,
     rank: idx + 1
   }));
 
-  const today =
-    new Date();
-
-  const state =
-    loadState();
+  const today = new Date();
+  const state = loadState();
 
   let invested = [];
-
-  let pairHolding =
-    state?.pairHolding || null;
+  let pairHolding = state?.pairHolding || null;
 
   const shouldRebalance =
     !state ||
@@ -349,72 +227,54 @@ async function run() {
     isFirstBusinessDay(today);
 
   if (shouldRebalance) {
+    const selected = buildInvestments(results, pairHolding);
 
-    const selected =
-      buildInvestments(
-        results,
-        pairHolding
-      );
+    invested = selected.map(r => r.name);
 
-    invested =
-      selected.map(r => r.name);
+    const selectedPair = selected.find(
+      r => r.type === "EU" || r.type === "EM"
+    );
 
-    const selectedPair =
-      selected.find(
-        r =>
-          r.type === "EU" ||
-          r.type === "EM"
-      );
-
-    pairHolding =
-      selectedPair
-        ? selectedPair.type
-        : null;
+    pairHolding = selectedPair ? selectedPair.type : null;
 
     saveState({
-      lastRebalance:
-        today.toISOString(),
+      lastRebalance: today.toISOString(),
       invested,
       pairHolding
     });
 
   } else {
-
-    invested =
-      state.invested || [];
+    invested = state.invested || [];
   }
 
   results = results.map(r => ({
     ...r,
-    invested:
-      invested.includes(r.name)
+    invested: invested.includes(r.name)
   }));
 
   let tips = null;
+  let spy = null;
 
   try {
-
-    tips =
-      await getTipsData();
-
+    tips = await getTipsData();
   } catch (e) {
-
     console.log("ERROR TIPS");
     console.log(e.message);
   }
 
+  try {
+    spy = await getSpyData();
+  } catch (e) {
+    console.log("ERROR SPY");
+    console.log(e.message);
+  }
+
   const output = {
-
-    updated:
-      today.toISOString(),
-
-    rebalanceToday:
-      shouldRebalance,
-
+    updated: today.toISOString(),
+    rebalanceToday: shouldRebalance,
     tips,
-
+    spy,
     table: results,
-
     invested
   };
 
@@ -423,76 +283,54 @@ async function run() {
     JSON.stringify(output, null, 2)
   );
 
-  await sendDiscord(results, tips);
+  await sendDiscord(results, tips, spy);
 
   console.log("DONE");
 }
 
-async function sendDiscord(results, tips) {
+async function sendDiscord(results, tips, spy) {
+  console.log("Discord test started");
 
-  console.log(
-    "Discord test started"
-  );
-
-  if (
-    !process.env.GTAA_WEBHOOK
-  ) {
-
-    console.log(
-      "NO WEBHOOK FOUND"
-    );
-
+  if (!process.env.GTAA_WEBHOOK) {
+    console.log("NO WEBHOOK FOUND");
     return;
   }
 
-  const tipsText =
-  tips
-    ? `\n\nTIPS: ${tips.sma200Pct >= 0 ? "+" : ""}${tips.sma200Pct.toFixed(2)}% ${tips.sma200Pct >= 0 ? "über SMA200" : "unter SMA200"}`
-    : "";
+  const tipsText = tips
+    ? `TIPS: ${tips.sma200Pct >= 0 ? "+" : ""}${tips.sma200Pct.toFixed(2)}% ${tips.sma200Pct >= 0 ? "über SMA200" : "unter SMA200"}`
+    : "TIPS: keine Daten";
 
-  const lines =
-    results.map(r => {
+  const spyText = spy
+    ? `SPY: ${spy.sma150Pct >= 0 ? "+" : ""}${spy.sma150Pct.toFixed(2)}% ${spy.sma150Pct >= 0 ? "über SMA150" : "unter SMA150"}`
+    : "SPY: keine Daten";
 
-      const marker =
-        r.invested
-          ? "🔵"
-          : "⚪";
+  const lines = results.map(r => {
+    const marker = r.invested ? "🔵" : "⚪";
 
-      return (
-        `${marker} #${r.rank} ${r.name}\n` +
-        `Momentum: ${r.momentum.toFixed(2)} | ` +
-        `SMA150: ${r.sma150Pct.toFixed(2)} | ` +
-        `SMA20>SMA150: ${r.sma20Pct.toFixed(2)}`
-      );
-
-    }).join("\n\n");
-
-  const response =
-    await fetch(
-      process.env.GTAA_WEBHOOK,
-      {
-
-        method: "POST",
-
-        headers: {
-          "Content-Type":
-            "application/json"
-        },
-
-        body: JSON.stringify({
-
-          content:
-            `📊 GTAA Signale${tipsText}\n\n` +
-            `${lines}\n\n` +
-            `🔵 = investiert`
-        })
-      }
+    return (
+      `${marker} #${r.rank} ${r.name}\n` +
+      `Momentum: ${r.momentum.toFixed(2)} | ` +
+      `SMA150: ${r.sma150Pct.toFixed(2)} | ` +
+      `SMA20>SMA150: ${r.sma20Pct.toFixed(2)}`
     );
+  }).join("\n\n");
 
-  console.log(
-    "Discord status:",
-    response.status
-  );
+  const response = await fetch(process.env.GTAA_WEBHOOK, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      content:
+        `📊 GTAA Signale\n\n` +
+        `${tipsText}\n` +
+        `${spyText}\n\n` +
+        `${lines}\n\n` +
+        `🔵 = investiert`
+    })
+  });
+
+  console.log("Discord status:", response.status);
 }
 
 run();
