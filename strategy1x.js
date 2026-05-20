@@ -6,7 +6,7 @@ const assets = [
   { name: "EMU Value", symbol: "AW1T.DE", type: "VALUE" },
   { name: "Bonds", symbol: "SXRM.DE", type: "BONDS", convertUsdToEur: true },
   { name: "Gold", symbol: "4GLD.DE", type: "GOLD" },
-  { name: "Rohstoffe", symbol: "UC44.DE", type: "COMMODITIES" },
+  { name: "Rohstoffe", symbol: "UEQU.DE", type: "COMMODITIES" },
   { name: "USD Overnight Rate", symbol: "FEDF.MI", type: "CASHUSD" }
 ];
 
