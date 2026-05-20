@@ -206,6 +206,28 @@ async function getTipsData() {
   };
 }
 
+async function getSpyData() {
+
+  const prices =
+    await fetchData("^SP500TR");
+
+  const current =
+    prices.at(-1);
+
+  const sma150 =
+    sma(prices, 150);
+
+  const sma150Pct =
+    ((current / sma150) - 1) * 100;
+
+  return {
+    symbol: "^SP500TR",
+    current,
+    sma150,
+    sma150Pct
+  };
+}
+
 async function run() {
 
   let results = [];
