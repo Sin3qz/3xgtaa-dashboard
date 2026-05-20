@@ -9,23 +9,24 @@ async function load() {
   table.innerHTML = "";
   prices.innerHTML = "";
 
- if (data.tips) {
-
-  const diff =
-    ((data.tips.current / data.tips.sma200) - 1) * 100;
-
+if (data.tips) {
   tipsBox.innerHTML = `
     <div class="tips-title">TIPS</div>
-
-    <div>Aktuell: ${data.tips.current.toFixed(2)}</div>
-
-    <div>SMA200: ${data.tips.sma200.toFixed(2)}</div>
-
-    <div class="${diff >= 0 ? "green" : "red"}">
-      ${diff >= 0 ? "+" : ""}
-      ${diff.toFixed(2)}%
-      ${diff >= 0 ? "über SMA200" : "unter SMA200"}
+    <div class="${data.tips.sma200Pct >= 0 ? "green" : "red"}">
+      ${data.tips.sma200Pct >= 0 ? "+" : ""}${data.tips.sma200Pct.toFixed(2)}%
+      ${data.tips.sma200Pct >= 0 ? "über SMA200" : "unter SMA200"}
     </div>
+  `;
+
+  prices.innerHTML += `
+    <tr>
+      <td>TIPS</td>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+      <td>SMA200: ${data.tips.sma200.toFixed(2)}</td>
+      <td>${data.tips.current.toFixed(2)}</td>
+    </tr>
   `;
 }
 
