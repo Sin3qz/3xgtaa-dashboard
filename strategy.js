@@ -236,3 +236,280 @@ async function getGoldMacroData() {
     sma150Pct
   };
 }
+
+async function run() {
+
+  let results = [];
+
+  for (const a of assets) {
+
+    try {
+
+      console.log(`Loading ${a.name}`);
+
+      const prices =
+        await fetchData(a.symbol);
+
+      if (!prices || prices.length < 200) {
+        continue;
+      }
+
+      const i =
+        prices.length - 1;
+
+      const current =
+        prices[i];
+
+      const m1 =
+        pct(current, prices[i - 21]);
+
+      const m3 =
+        pct(current, prices[i - 63]);
+
+      const m6 =
+        pct(current, prices[i - 126]);
+
+      const m9 =
+        pct(current, prices[i - 189]);
+
+      const momentum =
+        m1 + m3 + m6 + m9;
+
+      const sma150 =
+        sma(prices, 150);
+
+      const sma20 =
+        sma(prices, 20);
+
+      const sma150Pct =
+        pct(current, sma150);
+
+      const sma20Pct =
+        pct(sma20, sma150);
+
+      results.push({
+
+        name: a.name,
+        symbol: a.symbol,
+        type: a.type,
+
+        current,
+
+        p1m: prices[i - 21],
+        p3m: prices[i - 63],
+        p6m: prices[i - 126],
+        p9m: prices[i - 189],
+
+        m1,
+        m3,
+        m6,
+        m9,
+
+        momentum,
+
+        sma150Pct,
+        sma20Pct,
+
+        valid:
+          momentum > 0 &&
+          current > sma150 &&
+          sma20 > sma150
+      });
+
+    } catch (e) {
+
+      console.log(`ERROR ${a.name}`);
+      console.log(e.message);
+    }
+  }
+
+  results.sort((a, b) =>
+    b.momentum - a.momentum
+  );
+
+  results = results.map((r, idx) => ({
+    ...r,
+    rank: idx + 1
+  }));
+
+  const today =
+    new Date();
+
+  const state =
+    loadState();
+
+  let invested = [];
+
+  let pairHolding =
+    state?.pairHolding || null;
+
+  const shouldRebalance =
+    !state ||
+    !state.invested ||
+    state.invested.length === 0 ||
+    isFirstBusinessDay(today);
+
+  if (shouldRebalance) {
+
+    const selected =
+      buildInvestments(results, pairHolding);
+
+    invested =
+      selected.map(r => r.name);
+
+    const selectedPair =
+      selected.find(
+        r =>
+          r.type === "EU" ||
+          r.type === "EM"
+      );
+
+    pairHolding =
+      selectedPair
+        ? selectedPair.type
+        : null;
+
+    saveState({
+
+      lastRebalance:
+        today.toISOString(),
+
+      invested,
+
+      pairHolding
+    });
+
+  } else {
+
+    invested =
+      state.invested || [];
+  }
+
+  results = results.map(r => ({
+    ...r,
+    invested:
+      invested.includes(r.name)
+  }));
+
+  let tips = null;
+  let spy = null;
+  let goldMacro = null;
+
+  try {
+    tips =
+      await getTipsData();
+  } catch (e) {
+    console.log("ERROR TIPS");
+  }
+
+  try {
+    spy =
+      await getSpyData();
+  } catch (e) {
+    console.log("ERROR SPY");
+  }
+
+  try {
+    goldMacro =
+      await getGoldMacroData();
+  } catch (e) {
+    console.log("ERROR GOLD");
+  }
+
+  const output = {
+
+    updated:
+      today.toISOString(),
+
+    tips,
+    spy,
+    goldMacro,
+
+    table: results,
+
+    invested
+  };
+
+  fs.writeFileSync(
+    "signals.json",
+    JSON.stringify(output, null, 2)
+  );
+
+  await sendDiscord(
+    results,
+    tips,
+    spy,
+    goldMacro
+  );
+
+  console.log("DONE");
+}
+
+async function sendDiscord(
+  results,
+  tips,
+  spy,
+  goldMacro
+) {
+
+  if (!process.env.GTAA_WEBHOOK) {
+    console.log("NO WEBHOOK FOUND");
+    return;
+  }
+
+  const tipsText =
+    tips
+      ? `TIPS: ${tips.sma200Pct >= 0 ? "+" : ""}${tips.sma200Pct.toFixed(2)}% ${tips.sma200Pct >= 0 ? "über SMA200" : "unter SMA200"}`
+      : "TIPS: keine Daten";
+
+  const spyText =
+    spy
+      ? `SPY: ${spy.sma150Pct >= 0 ? "+" : ""}${spy.sma150Pct.toFixed(2)}% ${spy.sma150Pct >= 0 ? "über SMA150" : "unter SMA150"}`
+      : "SPY: keine Daten";
+
+  const goldText =
+    goldMacro
+      ? `Gold: ${goldMacro.sma150Pct >= 0 ? "+" : ""}${goldMacro.sma150Pct.toFixed(2)}% ${goldMacro.sma150Pct >= 0 ? "über SMA150" : "unter SMA150"}`
+      : "Gold: keine Daten";
+
+  const lines =
+    results.map(r => {
+
+      const marker =
+        r.invested
+          ? "🔵"
+          : "⚪";
+
+      return (
+        `${marker} #${r.rank} ${r.name}\n` +
+        `Momentum: ${r.momentum.toFixed(2)} | ` +
+        `SMA150: ${r.sma150Pct.toFixed(2)} | ` +
+        `SMA20>SMA150: ${r.sma20Pct.toFixed(2)}`
+      );
+    }).join("\n\n");
+
+  await fetch(
+    process.env.GTAA_WEBHOOK,
+    {
+
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json"
+      },
+
+      body: JSON.stringify({
+
+        content:
+          `📊 GTAA Signale\n\n` +
+          `${tipsText}\n` +
+          `${spyText}\n` +
+          `${goldText}\n\n` +
+          `${lines}\n\n` +
+          `🔵 = investiert`
+      })
+    }
+  );
+}
+
+run();
