@@ -424,9 +424,9 @@ async function sendDiscord(results, tips) {
   }
 
   const tipsText =
-    tips
-      ? `\n\nTIPS SMA200: ${tips.sma200.toFixed(2)} | Abstand: ${tips.sma200Pct.toFixed(2)}%`
-      : "";
+  tips
+    ? `\n\nTIPS: ${tips.sma200Pct >= 0 ? "+" : ""}${tips.sma200Pct.toFixed(2)}% ${tips.sma200Pct >= 0 ? "über SMA200" : "unter SMA200"}`
+    : "";
 
   const lines =
     results.map(r => {
