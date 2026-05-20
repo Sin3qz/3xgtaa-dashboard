@@ -9,26 +9,28 @@ async function load() {
   table.innerHTML = "";
   prices.innerHTML = "";
 
-if (data.tips) {
-  tipsBox.innerHTML = `
-    <div class="tips-title">TIPS</div>
-    <div class="${data.tips.sma200Pct >= 0 ? "green" : "red"}">
-      ${data.tips.sma200Pct >= 0 ? "+" : ""}${data.tips.sma200Pct.toFixed(2)}%
-      ${data.tips.sma200Pct >= 0 ? "über SMA200" : "unter SMA200"}
-    </div>
-  `;
+  tipsBox.innerHTML = "";
 
-  prices.innerHTML += `
-    <tr>
-      <td>TIPS</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>SMA200: ${data.tips.sma200.toFixed(2)}</td>
-      <td>${data.tips.current.toFixed(2)}</td>
-    </tr>
-  `;
-}
+  if (data.tips) {
+    tipsBox.innerHTML += `
+      <div class="tips-title">TIPS</div>
+      <div class="${data.tips.sma200Pct >= 0 ? "green" : "red"}">
+        ${data.tips.sma200Pct >= 0 ? "+" : ""}${data.tips.sma200Pct.toFixed(2)}%
+        ${data.tips.sma200Pct >= 0 ? "über SMA200" : "unter SMA200"}
+      </div>
+    `;
+  }
+
+  if (data.spy) {
+    tipsBox.innerHTML += `
+      <br>
+      <div class="tips-title">SPY</div>
+      <div class="${data.spy.sma150Pct >= 0 ? "green" : "red"}">
+        ${data.spy.sma150Pct >= 0 ? "+" : ""}${data.spy.sma150Pct.toFixed(2)}%
+        ${data.spy.sma150Pct >= 0 ? "über SMA150" : "unter SMA150"}
+      </div>
+    `;
+  }
 
   data.table.forEach(d => {
     let rowClass = "";
@@ -63,6 +65,32 @@ if (data.tips) {
       </tr>
     `;
   });
+
+  if (data.tips) {
+    prices.innerHTML += `
+      <tr>
+        <td>TIPS</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>SMA200: ${data.tips.sma200.toFixed(2)}</td>
+        <td>${data.tips.current.toFixed(2)}</td>
+      </tr>
+    `;
+  }
+
+  if (data.spy) {
+    prices.innerHTML += `
+      <tr>
+        <td>SPY</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>SMA150: ${data.spy.sma150.toFixed(2)}</td>
+        <td>${data.spy.current.toFixed(2)}</td>
+      </tr>
+    `;
+  }
 }
 
 load();
