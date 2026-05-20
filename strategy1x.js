@@ -7,8 +7,7 @@ const assets = [
   { name: "Bonds", symbol: "SXRM.DE", type: "BONDS", convertUsdToEur: true },
   { name: "Gold", symbol: "4GLD.DE", type: "GOLD" },
   { name: "Rohstoffe", symbol: "UC44.DE", type: "COMMODITIES" },
-  { name: "USD Overnight Rate", symbol: "FEDF.MI", type: "CASHUSD" },
-  { name: "USD/EUR", symbol: "USDEUR=X", type: "FX" }
+  { name: "USD Overnight Rate", symbol: "FEDF.MI", type: "CASHUSD" }
 ];
 
 async function fetchData(symbol) {
