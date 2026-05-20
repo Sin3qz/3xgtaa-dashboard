@@ -21,9 +21,11 @@ jobs:
 
       - run: node strategy.js
 
+      - run: node strategy1x.js
+
       - run: |
           git config user.name "bot"
           git config user.email "bot@bot.com"
-          git add signals.json state.json
+          git add signals.json signals1x.json state.json
           git commit -m "update signals" || echo "no changes"
           git push
