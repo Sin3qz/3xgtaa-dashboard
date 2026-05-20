@@ -15,6 +15,24 @@
       padding: 20px;
     }
 
+    nav {
+      margin-bottom: 25px;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      background: #21262d;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-right: 10px;
+      font-weight: bold;
+    }
+
+    nav a.active {
+      background: #2457c5;
+    }
+
     .header {
       display: flex;
       justify-content: space-between;
@@ -32,7 +50,7 @@
       border: 1px solid #30363d;
       border-radius: 10px;
       padding: 12px 18px;
-      min-width: 150px;
+      min-width: 180px;
       text-align: right;
       font-weight: bold;
     }
@@ -82,11 +100,16 @@
 
 <body>
 
+  <nav>
+    <a href="index.html" class="active">3xGTAA</a>
+    <a href="1xgtaa.html">1xGTAA</a>
+  </nav>
+
   <div class="header">
     <h1>📊 3x GTAA Dashboard</h1>
 
     <div id="tipsBox" class="tips-box">
-      <div class="tips-title">TIPS</div>
+      <div class="tips-title">TIPS / SPY</div>
       <div>Lädt...</div>
     </div>
   </div>
