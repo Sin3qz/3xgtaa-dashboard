@@ -86,7 +86,7 @@ function convertUsdSeriesToEur(
 async function getTipsData() {
 
   const prices =
-    await fetchData("ITPS.DE");
+    await fetchData("TI5G.L");
 
   const current =
     prices.at(-1);
@@ -98,7 +98,7 @@ async function getTipsData() {
     ((current / sma200) - 1) * 100;
 
   return {
-    symbol: "ITPS.DE",
+    symbol: "TI5G.L",
     current,
     sma200,
     sma200Pct
