@@ -122,14 +122,14 @@ function buildInvestments(results, previousPairType) {
 }
 
 async function getTipsData() {
-  const prices = await fetchData("TI5G.L");
+  const prices = await fetchData("IBC5.DE");
 
   const current = prices.at(-1);
   const sma200 = sma(prices, 200);
   const sma200Pct = ((current / sma200) - 1) * 100;
 
   return {
-    symbol: "TI5G.L",
+    symbol: "IBC5.DE",
     current,
     sma200,
     sma200Pct
