@@ -122,14 +122,14 @@ function buildInvestments(results, previousPairType) {
 }
 
 async function getTipsData() {
-  const prices = await fetchData("IHYA.DE");
+  const prices = await fetchData("ITPS.DE");
 
   const current = prices.at(-1);
   const sma200 = sma(prices, 200);
   const sma200Pct = ((current / sma200) - 1) * 100;
 
   return {
-    symbol: "IHYA.DE",
+    symbol: "ITPS.DE",
     current,
     sma200,
     sma200Pct
