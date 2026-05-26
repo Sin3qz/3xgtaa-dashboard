@@ -316,14 +316,14 @@ async function run() {
     JSON.stringify(output, null, 2)
   );
 
-  await sendDiscord(
-    results,
-    tips,
-    spy,
-    goldMacro
-  );
+ await sendDiscord(
+  results,
+  tips,
+  spy,
+  goldMacro
+);
 
-  console.log("DONE 1xGTAA");
+console.log("DONE 1xGTAA");
 }
 
 async function sendDiscord(
@@ -337,21 +337,6 @@ async function sendDiscord(
     console.log("NO WEBHOOK FOUND");
     return;
   }
-
-  const tipsText =
-    tips
-      ? `TIPS: ${tips.sma200Pct >= 0 ? "+" : ""}${tips.sma200Pct.toFixed(2)}% ${tips.sma200Pct >= 0 ? "über SMA200" : "unter SMA200"}`
-      : "TIPS: keine Daten";
-
-  const spyText =
-    spy
-      ? `SPY: ${spy.sma150Pct >= 0 ? "+" : ""}${spy.sma150Pct.toFixed(2)}% ${spy.sma150Pct >= 0 ? "über SMA150" : "unter SMA150"}`
-      : "SPY: keine Daten";
-
-  const goldText =
-    goldMacro
-      ? `Gold: ${goldMacro.sma150Pct >= 0 ? "+" : ""}${goldMacro.sma150Pct.toFixed(2)}% ${goldMacro.sma150Pct >= 0 ? "über SMA150" : "unter SMA150"}`
-      : "Gold: keine Daten";
 
   const lines =
     results.map(r => {
@@ -385,9 +370,6 @@ async function sendDiscord(
 
         content:
           `📊 1xGTAA Signale\n\n` +
-          `${tipsText}\n` +
-          `${spyText}\n` +
-          `${goldText}\n\n` +
           `${lines}\n\n` +
           `🔹 = Platz 1 investiert\n` +
           `🔵 = Platz 2 investiert`
