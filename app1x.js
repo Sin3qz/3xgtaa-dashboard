@@ -60,7 +60,7 @@ async function load() {
       <br>
 
       <div class="tips-title">
-        S&P500 (EUR)
+        S&P500 (EUR hedged)
       </div>
 
       <div class="${
