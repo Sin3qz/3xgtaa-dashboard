@@ -1,76 +1,170 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
-
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>1x GTAA Dashboard</title>
 
-  <title>1xGTAA Dashboard</title>
+  <style>
+    body {
+      background: #0d1117;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
 
-  <link rel="stylesheet" href="style.css" />
+    nav {
+      margin-bottom: 25px;
+    }
 
+    nav a {
+      color: white;
+      text-decoration: none;
+      background: #21262d;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-right: 10px;
+      font-weight: bold;
+    }
+
+    nav a.active {
+      background: #2457c5;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+    }
+
+    h1, h2 {
+      margin-bottom: 20px;
+      margin-top: 40px;
+    }
+
+    .last-update {
+      margin: -10px 0 25px 0;
+      color: #8b949e;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .tips-box {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 12px 18px;
+      min-width: 180px;
+      text-align: right;
+      font-weight: bold;
+    }
+
+    .tips-title {
+      color: #8ec5ff;
+      margin-bottom: 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 40px;
+      background: #161b22;
+    }
+
+    th,
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #30363d;
+      text-align: center;
+    }
+
+    th {
+      background: #21262d;
+    }
+
+    tr:hover {
+      background: #1f2937;
+    }
+
+    .green {
+      color: #00ff88;
+      font-weight: bold;
+    }
+
+    .red {
+      color: #ff5c5c;
+      font-weight: bold;
+    }
+
+    .invested-one {
+      background: #8ec5ff;
+      color: black;
+      font-weight: bold;
+    }
+
+    .invested-two {
+      background: #2457c5;
+      color: white;
+      font-weight: bold;
+    }
+  </style>
 </head>
 
 <body>
 
-  <div class="container">
+  <nav>
+    <a href="index.html">3xGTAA</a>
+    <a href="1xgtaa.html" class="active">1xGTAA</a>
+  </nav>
 
-    <div class="topbar">
+  <div class="header">
+    <h1>📊 1x GTAA Dashboard</h1>
 
-      <div class="nav-buttons">
-        <a href="index.html">3xGTAA</a>
-        <a href="1xgtaa.html" class="active">1xGTAA</a>
-      </div>
-
-      <div class="macro-boxes">
-
-        <div id="tipsBox" class="macro-box"></div>
-
-        <div id="spyBox" class="macro-box"></div>
-
-        <div id="goldBox" class="macro-box"></div>
-
-      </div>
-
+    <div id="tipsBox" class="tips-box">
+      <div class="tips-title">TIPS / SPY</div>
+      <div>Lädt...</div>
     </div>
-
-    <h1>1xGTAA</h1>
-
-    <div id="lastUpdate" class="last-update"></div>
-
-    <table id="rankingTable">
-
-      <thead>
-        <tr>
-          <th>Rang</th>
-          <th>Asset</th>
-          <th>Momentum</th>
-          <th>SMA150</th>
-          <th>SMA20>SMA150</th>
-        </tr>
-      </thead>
-
-      <tbody></tbody>
-
-    </table>
-
-    <h2>Historische Signale</h2>
-
-    <table id="historyTable">
-
-      <thead>
-        <tr>
-          <th>Datum</th>
-          <th>Investiert</th>
-        </tr>
-      </thead>
-
-      <tbody></tbody>
-
-    </table>
-
   </div>
+
+  <div id="lastUpdate" class="last-update"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Rank</th>
+        <th>Asset</th>
+        <th>1M (%)</th>
+        <th>3M (%)</th>
+        <th>6M (%)</th>
+        <th>9M (%)</th>
+        <th>Momentumscore (%)</th>
+        <th>SMA150 (%)</th>
+        <th>SMA20>SMA150 (%)</th>
+      </tr>
+    </thead>
+
+    <tbody id="table"></tbody>
+  </table>
+
+  <h2>📈 Historische Kurse</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Asset</th>
+        <th>1M</th>
+        <th>3M</th>
+        <th>6M</th>
+        <th>9M</th>
+        <th>Aktuell</th>
+      </tr>
+    </thead>
+
+    <tbody id="prices"></tbody>
+  </table>
 
   <script src="app1x.js"></script>
 
