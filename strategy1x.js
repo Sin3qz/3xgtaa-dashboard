@@ -13,10 +13,9 @@ const assets = [
   { name: "Gold", symbol: "4GLD.DE", type: "GOLD" },
   { name: "Rohstoffe", symbol: "UEQU.DE", type: "COMMODITIES" },
   {
-    name: "USD Overnight Rate",
-    symbol: "FEDF.MI",
-    type: "CASHUSD",
-    convertUsdToEur: true
+     name: "USD Overnight Rate",
+  symbol: "FEDF.MI",
+  type: "CASHUSD"
   }
 ];
 
