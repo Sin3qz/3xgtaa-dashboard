@@ -16,7 +16,7 @@ const assets = [
 
 async function fetchData(symbol) {
   const url =
-    `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=2y&interval=1d&events=history`;
+    `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=3y&interval=1d&events=history`;
 
   const res = await fetch(url);
   const json = await res.json();
@@ -27,23 +27,104 @@ async function fetchData(symbol) {
 
   const result = json.chart.result[0];
 
+  const timestamps = result.timestamp || [];
+
   const adjusted =
     result.indicators.adjclose &&
     result.indicators.adjclose[0] &&
     result.indicators.adjclose[0].adjclose;
 
-  const close = result.indicators.quote[0].close;
+  const close =
+    result.indicators.quote[0].close;
 
-  return (adjusted || close).filter(v => v !== null);
+  const values = adjusted || close;
+
+  return timestamps
+    .map((t, i) => {
+      const value = values[i];
+
+      if (value === null || value === undefined || Number.isNaN(value)) {
+        return null;
+      }
+
+      return {
+        date: new Date(t * 1000).toISOString().slice(0, 10),
+        close: value
+      };
+    })
+    .filter(Boolean);
 }
 
 function pct(a, b) {
   return ((a / b) - 1) * 100;
 }
 
-function sma(p, len) {
-  const slice = p.slice(-len);
+function sma(values, len) {
+  const slice = values.slice(-len);
   return slice.reduce((a, b) => a + b, 0) / len;
+}
+
+function todayBerlinDate() {
+  return new Date(
+    new Date().toLocaleString("en-US", {
+      timeZone: "Europe/Berlin"
+    })
+  );
+}
+
+function toDateString(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function yesterdayBerlinString() {
+  const d = todayBerlinDate();
+  d.setDate(d.getDate() - 1);
+  return toDateString(d);
+}
+
+function subtractMonths(dateString, months) {
+  const [year, month, day] =
+    dateString.split("-").map(Number);
+
+  const targetMonthIndex = month - 1 - months;
+
+  const firstOfTarget =
+    new Date(Date.UTC(year, targetMonthIndex, 1));
+
+  const targetYear =
+    firstOfTarget.getUTCFullYear();
+
+  const targetMonth =
+    firstOfTarget.getUTCMonth();
+
+  const lastDayOfTargetMonth =
+    new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate();
+
+  const safeDay =
+    Math.min(day, lastDayOfTargetMonth);
+
+  return toDateString(
+    new Date(Date.UTC(targetYear, targetMonth, safeDay))
+  );
+}
+
+function getPointOnOrBefore(points, targetDate) {
+  const filtered =
+    points.filter(p => p.date <= targetDate);
+
+  if (filtered.length === 0) {
+    return null;
+  }
+
+  return filtered[filtered.length - 1];
+}
+
+function getCleanPointsUntilYesterday(points) {
+  const maxDate = yesterdayBerlinString();
+
+  return points
+    .filter(p => p.date <= maxDate)
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 function loadState() {
@@ -51,7 +132,9 @@ function loadState() {
     return null;
   }
 
-  return JSON.parse(fs.readFileSync(STATE_FILE, "utf8"));
+  return JSON.parse(
+    fs.readFileSync(STATE_FILE, "utf8")
+  );
 }
 
 function saveState(state) {
@@ -71,7 +154,8 @@ function isFirstBusinessDay(date) {
     d.setUTCDate(d.getUTCDate() + 1);
   }
 
-  return date.toISOString().slice(0, 10) === d.toISOString().slice(0, 10);
+  return date.toISOString().slice(0, 10) ===
+    d.toISOString().slice(0, 10);
 }
 
 function buildInvestments(results, previousPairType) {
@@ -84,7 +168,8 @@ function buildInvestments(results, previousPairType) {
   let forcedPair = null;
 
   if (previousPairType === "EU" && eu && em) {
-    const emInTop3 = rawTop3.some(r => r.type === "EM");
+    const emInTop3 =
+      rawTop3.some(r => r.type === "EM");
 
     if (emInTop3 && eu.rank <= 4 && eu.valid) {
       forcedPair = eu;
@@ -92,7 +177,8 @@ function buildInvestments(results, previousPairType) {
   }
 
   if (previousPairType === "EM" && eu && em) {
-    const euInTop3 = rawTop3.some(r => r.type === "EU");
+    const euInTop3 =
+      rawTop3.some(r => r.type === "EU");
 
     if (euInTop3 && em.rank <= 4 && em.valid) {
       forcedPair = em;
@@ -109,8 +195,11 @@ function buildInvestments(results, previousPairType) {
     if (selected.length >= 3) break;
     if (selected.some(s => s.name === asset.name)) continue;
 
-    const alreadyHasEU = selected.some(s => s.type === "EU");
-    const alreadyHasEM = selected.some(s => s.type === "EM");
+    const alreadyHasEU =
+      selected.some(s => s.type === "EU");
+
+    const alreadyHasEM =
+      selected.some(s => s.type === "EM");
 
     if (asset.type === "EU" && alreadyHasEM) continue;
     if (asset.type === "EM" && alreadyHasEU) continue;
@@ -121,12 +210,117 @@ function buildInvestments(results, previousPairType) {
   return selected.slice(0, 3);
 }
 
-async function getTipsData() {
-  const prices = await fetchData("IBC5.DE");
+function calculateAssetMetrics(asset, pointsRaw) {
+  const points = getCleanPointsUntilYesterday(pointsRaw);
 
-  const current = prices.at(-1);
-  const sma200 = sma(prices, 200);
-  const sma200Pct = ((current / sma200) - 1) * 100;
+  if (!points || points.length < 220) {
+    return null;
+  }
+
+  const currentPoint =
+    points[points.length - 1];
+
+  const current =
+    currentPoint.close;
+
+  const baseDate =
+    currentPoint.date;
+
+  const p1 =
+    getPointOnOrBefore(points, subtractMonths(baseDate, 1));
+
+  const p3 =
+    getPointOnOrBefore(points, subtractMonths(baseDate, 3));
+
+  const p6 =
+    getPointOnOrBefore(points, subtractMonths(baseDate, 6));
+
+  const p9 =
+    getPointOnOrBefore(points, subtractMonths(baseDate, 9));
+
+  if (!p1 || !p3 || !p6 || !p9) {
+    return null;
+  }
+
+  const closes =
+    points.map(p => p.close);
+
+  const sma150 =
+    sma(closes, 150);
+
+  const sma20 =
+    sma(closes, 20);
+
+  const m1 =
+    pct(current, p1.close);
+
+  const m3 =
+    pct(current, p3.close);
+
+  const m6 =
+    pct(current, p6.close);
+
+  const m9 =
+    pct(current, p9.close);
+
+  const momentum =
+    m1 + m3 + m6 + m9;
+
+  const sma150Pct =
+    pct(current, sma150);
+
+  const sma20Pct =
+    pct(sma20, sma150);
+
+  return {
+    name: asset.name,
+    symbol: asset.symbol,
+    type: asset.type,
+
+    currentDate: baseDate,
+    p1Date: p1.date,
+    p3Date: p3.date,
+    p6Date: p6.date,
+    p9Date: p9.date,
+
+    current,
+    p1m: p1.close,
+    p3m: p3.close,
+    p6m: p6.close,
+    p9m: p9.close,
+
+    m1,
+    m3,
+    m6,
+    m9,
+
+    momentum,
+
+    sma150Pct,
+    sma20Pct,
+
+    valid:
+      momentum > 0 &&
+      current > sma150 &&
+      sma20 > sma150
+  };
+}
+
+async function getTipsData() {
+  const points =
+    getCleanPointsUntilYesterday(await fetchData("IBC5.DE"));
+
+  const closes =
+    points.map(p => p.close);
+
+  const current =
+    closes.at(-1);
+
+  const sma200 =
+    sma(closes, 200);
+
+  const sma200Pct =
+    pct(current, sma200);
 
   return {
     symbol: "IBC5.DE",
@@ -137,11 +331,20 @@ async function getTipsData() {
 }
 
 async function getSpyData() {
-  const prices = await fetchData("IBCF.DE");
+  const points =
+    getCleanPointsUntilYesterday(await fetchData("IBCF.DE"));
 
-  const current = prices.at(-1);
-  const sma150 = sma(prices, 150);
-  const sma150Pct = ((current / sma150) - 1) * 100;
+  const closes =
+    points.map(p => p.close);
+
+  const current =
+    closes.at(-1);
+
+  const sma150 =
+    sma(closes, 150);
+
+  const sma150Pct =
+    pct(current, sma150);
 
   return {
     symbol: "IBCF.DE",
@@ -152,11 +355,20 @@ async function getSpyData() {
 }
 
 async function getGoldMacroData() {
-  const prices = await fetchData("4GLD.DE");
+  const points =
+    getCleanPointsUntilYesterday(await fetchData("4GLD.DE"));
 
-  const current = prices.at(-1);
-  const sma150 = sma(prices, 150);
-  const sma150Pct = ((current / sma150) - 1) * 100;
+  const closes =
+    points.map(p => p.close);
+
+  const current =
+    closes.at(-1);
+
+  const sma150 =
+    sma(closes, 150);
+
+  const sma150Pct =
+    pct(current, sma150);
 
   return {
     symbol: "4GLD.DE",
@@ -173,55 +385,18 @@ async function run() {
     try {
       console.log(`Loading ${a.name}`);
 
-      const prices = await fetchData(a.symbol);
+      const rawPoints =
+        await fetchData(a.symbol);
 
-      if (!prices || prices.length < 200) {
+      const metrics =
+        calculateAssetMetrics(a, rawPoints);
+
+      if (!metrics) {
+        console.log(`Not enough data: ${a.name}`);
         continue;
       }
 
-      const i = prices.length - 1;
-      const current = prices[i];
-
-      const m1 = pct(current, prices[i - 21]);
-      const m3 = pct(current, prices[i - 63]);
-      const m6 = pct(current, prices[i - 126]);
-      const m9 = pct(current, prices[i - 189]);
-
-      const momentum = m1 + m3 + m6 + m9;
-
-      const sma150 = sma(prices, 150);
-      const sma20 = sma(prices, 20);
-
-      const sma150Pct = pct(current, sma150);
-      const sma20Pct = pct(sma20, sma150);
-
-      results.push({
-        name: a.name,
-        symbol: a.symbol,
-        type: a.type,
-
-        current,
-
-        p1m: prices[i - 21],
-        p3m: prices[i - 63],
-        p6m: prices[i - 126],
-        p9m: prices[i - 189],
-
-        m1,
-        m3,
-        m6,
-        m9,
-
-        momentum,
-
-        sma150Pct,
-        sma20Pct,
-
-        valid:
-          momentum > 0 &&
-          current > sma150 &&
-          sma20 > sma150
-      });
+      results.push(metrics);
 
     } catch (e) {
       console.log(`ERROR ${a.name}`);
@@ -229,18 +404,25 @@ async function run() {
     }
   }
 
-  results.sort((a, b) => b.momentum - a.momentum);
+  results.sort((a, b) =>
+    b.momentum - a.momentum
+  );
 
-  results = results.map((r, idx) => ({
-    ...r,
-    rank: idx + 1
-  }));
+  results =
+    results.map((r, idx) => ({
+      ...r,
+      rank: idx + 1
+    }));
 
-  const today = new Date();
-  const state = loadState();
+  const today =
+    new Date();
+
+  const state =
+    loadState();
 
   let invested = [];
-  let pairHolding = state?.pairHolding || null;
+  let pairHolding =
+    state?.pairHolding || null;
 
   const shouldRebalance =
     !state ||
@@ -249,15 +431,23 @@ async function run() {
     isFirstBusinessDay(today);
 
   if (shouldRebalance) {
-    const selected = buildInvestments(results, pairHolding);
+    const selected =
+      buildInvestments(results, pairHolding);
 
-    invested = selected.map(r => r.name);
+    invested =
+      selected.map(r => r.name);
 
-    const selectedPair = selected.find(
-      r => r.type === "EU" || r.type === "EM"
-    );
+    const selectedPair =
+      selected.find(
+        r =>
+          r.type === "EU" ||
+          r.type === "EM"
+      );
 
-    pairHolding = selectedPair ? selectedPair.type : null;
+    pairHolding =
+      selectedPair
+        ? selectedPair.type
+        : null;
 
     saveState({
       lastRebalance: today.toISOString(),
@@ -266,13 +456,15 @@ async function run() {
     });
 
   } else {
-    invested = state.invested || [];
+    invested =
+      state.invested || [];
   }
 
-  results = results.map(r => ({
-    ...r,
-    invested: invested.includes(r.name)
-  }));
+  results =
+    results.map(r => ({
+      ...r,
+      invested: invested.includes(r.name)
+    }));
 
   let tips = null;
   let spy = null;
@@ -329,39 +521,44 @@ async function sendDiscord(results, tips, spy, goldMacro) {
     : "TIPS: keine Daten";
 
   const spyText = spy
-    ? `S&P500: ${spy.sma150Pct >= 0 ? "+" : ""}${spy.sma150Pct.toFixed(2)}% ${spy.sma150Pct >= 0 ? "über SMA150" : "unter SMA150"}`
+    ? `S&P500 (EUR hedged): ${spy.sma150Pct >= 0 ? "+" : ""}${spy.sma150Pct.toFixed(2)}% ${spy.sma150Pct >= 0 ? "über SMA150" : "unter SMA150"}`
     : "S&P500: keine Daten";
 
   const goldText = goldMacro
     ? `Gold: ${goldMacro.sma150Pct >= 0 ? "+" : ""}${goldMacro.sma150Pct.toFixed(2)}% ${goldMacro.sma150Pct >= 0 ? "über SMA150" : "unter SMA150"}`
     : "Gold: keine Daten";
 
-  const lines = results.map(r => {
-    const marker = r.invested ? "🔵" : "⚪";
+  const lines =
+    results.map(r => {
+      const marker =
+        r.invested ? "🔵" : "⚪";
 
-    return (
-      `${marker} #${r.rank} ${r.name}\n` +
-      `Momentum: ${r.momentum.toFixed(2)} | ` +
-      `SMA150: ${r.sma150Pct.toFixed(2)} | ` +
-      `SMA20>SMA150: ${r.sma20Pct.toFixed(2)}`
-    );
-  }).join("\n\n");
+      return (
+        `${marker} #${r.rank} ${r.name}\n` +
+        `Momentum: ${r.momentum.toFixed(2)} | ` +
+        `SMA150: ${r.sma150Pct.toFixed(2)} | ` +
+        `SMA20>SMA150: ${r.sma20Pct.toFixed(2)}`
+      );
+    }).join("\n\n");
 
-  await fetch(process.env.GTAA_WEBHOOK, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      content:
-        `📊 GTAA Signale\n\n` +
-        `${tipsText}\n` +
-        `${spyText}\n` +
-        `${goldText}\n\n` +
-        `${lines}\n\n` +
-        `🔵 = investiert`
-    })
-  });
+  await fetch(
+    process.env.GTAA_WEBHOOK,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        content:
+          `📊 GTAA Signale\n\n` +
+          `${tipsText}\n` +
+          `${spyText}\n` +
+          `${goldText}\n\n` +
+          `${lines}\n\n` +
+          `🔵 = investiert`
+      })
+    }
+  );
 }
 
 run();
