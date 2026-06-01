@@ -15,27 +15,25 @@ const assets = [
   {
     name: "USD Overnight Rate",
     symbol: "FEDF.MI",
-    type: "CASHUSD"
+    type: "CASHUSD",
+    convertUsdToEur: true
   }
 ];
 
 async function fetchData(symbol) {
-
   const url =
-    `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=2y&interval=1d&events=history`;
+    `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=3y&interval=1d&events=history`;
 
-  const res =
-    await fetch(url);
-
-  const json =
-    await res.json();
+  const res = await fetch(url);
+  const json = await res.json();
 
   if (!json.chart || !json.chart.result || !json.chart.result[0]) {
     throw new Error(`No data for ${symbol}`);
   }
 
-  const result =
-    json.chart.result[0];
+  const result = json.chart.result[0];
+
+  const timestamps = result.timestamp || [];
 
   const adjusted =
     result.indicators.adjclose &&
@@ -45,57 +43,231 @@ async function fetchData(symbol) {
   const close =
     result.indicators.quote[0].close;
 
-  return (adjusted || close)
-    .filter(v => v !== null);
+  const values = adjusted || close;
+
+  return timestamps
+    .map((t, i) => {
+      const value = values[i];
+
+      if (value === null || value === undefined || Number.isNaN(value)) {
+        return null;
+      }
+
+      return {
+        date: new Date(t * 1000).toISOString().slice(0, 10),
+        close: value
+      };
+    })
+    .filter(Boolean);
 }
 
 function pct(a, b) {
   return ((a / b) - 1) * 100;
 }
 
-function sma(p, len) {
-
-  const slice =
-    p.slice(-len);
-
+function sma(values, len) {
+  const slice = values.slice(-len);
   return slice.reduce((a, b) => a + b, 0) / len;
 }
 
-function convertUsdSeriesToEur(
-  usdPrices,
-  usdEurPrices
-) {
-
-  const minLength =
-    Math.min(
-      usdPrices.length,
-      usdEurPrices.length
-    );
-
-  const usd =
-    usdPrices.slice(-minLength);
-
-  const fx =
-    usdEurPrices.slice(-minLength);
-
-  return usd.map((price, i) =>
-    price * fx[i]
+function todayBerlinDate() {
+  return new Date(
+    new Date().toLocaleString("en-US", {
+      timeZone: "Europe/Berlin"
+    })
   );
 }
 
-async function getTipsData() {
+function toDateString(date) {
+  return date.toISOString().slice(0, 10);
+}
 
-  const prices =
-    await fetchData("IBC5.DE");
+function yesterdayBerlinString() {
+  const d = todayBerlinDate();
+  d.setDate(d.getDate() - 1);
+  return toDateString(d);
+}
+
+function subtractMonths(dateString, months) {
+  const [year, month, day] =
+    dateString.split("-").map(Number);
+
+  const targetMonthIndex =
+    month - 1 - months;
+
+  const firstOfTarget =
+    new Date(Date.UTC(year, targetMonthIndex, 1));
+
+  const targetYear =
+    firstOfTarget.getUTCFullYear();
+
+  const targetMonth =
+    firstOfTarget.getUTCMonth();
+
+  const lastDayOfTargetMonth =
+    new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate();
+
+  const safeDay =
+    Math.min(day, lastDayOfTargetMonth);
+
+  return toDateString(
+    new Date(Date.UTC(targetYear, targetMonth, safeDay))
+  );
+}
+
+function getPointOnOrBefore(points, targetDate) {
+  const filtered =
+    points.filter(p => p.date <= targetDate);
+
+  if (filtered.length === 0) {
+    return null;
+  }
+
+  return filtered[filtered.length - 1];
+}
+
+function getCleanPointsUntilYesterday(points) {
+  const maxDate =
+    yesterdayBerlinString();
+
+  return points
+    .filter(p => p.date <= maxDate)
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function convertUsdSeriesToEur(usdPoints, fxPointsRaw) {
+  const fxPoints =
+    getCleanPointsUntilYesterday(fxPointsRaw);
+
+  return usdPoints
+    .map(p => {
+      const fx =
+        getPointOnOrBefore(fxPoints, p.date);
+
+      if (!fx) {
+        return null;
+      }
+
+      return {
+        date: p.date,
+        close: p.close * fx.close
+      };
+    })
+    .filter(Boolean);
+}
+
+function calculateAssetMetrics(asset, pointsRaw) {
+  const points =
+    getCleanPointsUntilYesterday(pointsRaw);
+
+  if (!points || points.length < 220) {
+    return null;
+  }
+
+  const currentPoint =
+    points[points.length - 1];
 
   const current =
-    prices.at(-1);
+    currentPoint.close;
+
+  const baseDate =
+    currentPoint.date;
+
+  const p1 =
+    getPointOnOrBefore(points, subtractMonths(baseDate, 1));
+
+  const p3 =
+    getPointOnOrBefore(points, subtractMonths(baseDate, 3));
+
+  const p6 =
+    getPointOnOrBefore(points, subtractMonths(baseDate, 6));
+
+  const p9 =
+    getPointOnOrBefore(points, subtractMonths(baseDate, 9));
+
+  if (!p1 || !p3 || !p6 || !p9) {
+    return null;
+  }
+
+  const closes =
+    points.map(p => p.close);
+
+  const sma150 =
+    sma(closes, 150);
+
+  const sma20 =
+    sma(closes, 20);
+
+  const m1 =
+    pct(current, p1.close);
+
+  const m3 =
+    pct(current, p3.close);
+
+  const m6 =
+    pct(current, p6.close);
+
+  const m9 =
+    pct(current, p9.close);
+
+  const momentum =
+    m1 + m3 + m6 + m9;
+
+  const sma150Pct =
+    pct(current, sma150);
+
+  const sma20Pct =
+    pct(sma20, sma150);
+
+  return {
+    name: asset.name,
+    symbol: asset.symbol,
+    type: asset.type,
+
+    currentDate: baseDate,
+    p1Date: p1.date,
+    p3Date: p3.date,
+    p6Date: p6.date,
+    p9Date: p9.date,
+
+    current,
+    p1m: p1.close,
+    p3m: p3.close,
+    p6m: p6.close,
+    p9m: p9.close,
+
+    m1,
+    m3,
+    m6,
+    m9,
+
+    momentum,
+
+    sma150Pct,
+    sma20Pct,
+
+    valid:
+      momentum > 0 &&
+      current > sma150 &&
+      sma20 > sma150
+  };
+}
+
+async function getTipsData() {
+  const points =
+    getCleanPointsUntilYesterday(await fetchData("IBC5.DE"));
+
+  const closes =
+    points.map(p => p.close);
+
+  const current =
+    closes.at(-1);
 
   const sma200 =
-    sma(prices, 200);
+    sma(closes, 200);
 
   const sma200Pct =
-    ((current / sma200) - 1) * 100;
+    pct(current, sma200);
 
   return {
     symbol: "IBC5.DE",
@@ -106,18 +278,20 @@ async function getTipsData() {
 }
 
 async function getSpyData() {
+  const points =
+    getCleanPointsUntilYesterday(await fetchData("IBCF.DE"));
 
-  const prices =
-    await fetchData("IBCF.DE");
+  const closes =
+    points.map(p => p.close);
 
   const current =
-    prices.at(-1);
+    closes.at(-1);
 
   const sma150 =
-    sma(prices, 150);
+    sma(closes, 150);
 
   const sma150Pct =
-    ((current / sma150) - 1) * 100;
+    pct(current, sma150);
 
   return {
     symbol: "IBCF.DE",
@@ -128,18 +302,20 @@ async function getSpyData() {
 }
 
 async function getGoldMacroData() {
+  const points =
+    getCleanPointsUntilYesterday(await fetchData("4GLD.DE"));
 
-  const prices =
-    await fetchData("4GLD.DE");
+  const closes =
+    points.map(p => p.close);
 
   const current =
-    prices.at(-1);
+    closes.at(-1);
 
   const sma150 =
-    sma(prices, 150);
+    sma(closes, 150);
 
   const sma150Pct =
-    ((current / sma150) - 1) * 100;
+    pct(current, sma150);
 
   return {
     symbol: "4GLD.DE",
@@ -150,99 +326,34 @@ async function getGoldMacroData() {
 }
 
 async function run() {
-
   let results = [];
 
-  const usdEurPrices =
+  const usdEurRaw =
     await fetchData("USDEUR=X");
 
   for (const a of assets) {
-
     try {
-
       console.log(`Loading ${a.name}`);
 
-      let prices =
+      let rawPoints =
         await fetchData(a.symbol);
 
-      // Bonds USD → EUR
       if (a.convertUsdToEur) {
-
-        prices =
-          convertUsdSeriesToEur(
-            prices,
-            usdEurPrices
-          );
+        rawPoints =
+          convertUsdSeriesToEur(rawPoints, usdEurRaw);
       }
 
-      if (!prices || prices.length < 200) {
+      const metrics =
+        calculateAssetMetrics(a, rawPoints);
+
+      if (!metrics) {
+        console.log(`Not enough data: ${a.name}`);
         continue;
       }
 
-      const i =
-        prices.length - 1;
-
-      const current =
-        prices[i];
-
-      const m1 =
-        pct(current, prices[i - 21]);
-
-      const m3 =
-        pct(current, prices[i - 63]);
-
-      const m6 =
-        pct(current, prices[i - 126]);
-
-      const m9 =
-        pct(current, prices[i - 189]);
-
-      const momentum =
-        m1 + m3 + m6 + m9;
-
-      const sma150 =
-        sma(prices, 150);
-
-      const sma20 =
-        sma(prices, 20);
-
-      const sma150Pct =
-        pct(current, sma150);
-
-      const sma20Pct =
-        pct(sma20, sma150);
-
-      results.push({
-
-        name: a.name,
-        symbol: a.symbol,
-        type: a.type,
-
-        current,
-
-        p1m: prices[i - 21],
-        p3m: prices[i - 63],
-        p6m: prices[i - 126],
-        p9m: prices[i - 189],
-
-        m1,
-        m3,
-        m6,
-        m9,
-
-        momentum,
-
-        sma150Pct,
-        sma20Pct,
-
-        valid:
-          momentum > 0 &&
-          current > sma150 &&
-          sma20 > sma150
-      });
+      results.push(metrics);
 
     } catch (e) {
-
       console.log(`ERROR ${a.name}`);
       console.log(e.message);
     }
@@ -252,10 +363,11 @@ async function run() {
     b.momentum - a.momentum
   );
 
-  results = results.map((r, idx) => ({
-    ...r,
-    rank: idx + 1
-  }));
+  results =
+    results.map((r, idx) => ({
+      ...r,
+      rank: idx + 1
+    }));
 
   const invested =
     results
@@ -263,51 +375,44 @@ async function run() {
       .slice(0, 2)
       .map(r => r.name);
 
-  results = results.map(r => ({
-    ...r,
-    invested:
-      invested.includes(r.name),
-
-    slot:
-      invested.indexOf(r.name) + 1
-  }));
+  results =
+    results.map(r => ({
+      ...r,
+      invested: invested.includes(r.name),
+      slot: invested.indexOf(r.name) + 1
+    }));
 
   let tips = null;
   let spy = null;
   let goldMacro = null;
 
   try {
-    tips =
-      await getTipsData();
+    tips = await getTipsData();
   } catch (e) {
     console.log("ERROR TIPS");
+    console.log(e.message);
   }
 
   try {
-    spy =
-      await getSpyData();
+    spy = await getSpyData();
   } catch (e) {
     console.log("ERROR SPY");
+    console.log(e.message);
   }
 
   try {
-    goldMacro =
-      await getGoldMacroData();
+    goldMacro = await getGoldMacroData();
   } catch (e) {
     console.log("ERROR GOLD");
+    console.log(e.message);
   }
 
   const output = {
-
-    updated:
-      new Date().toISOString(),
-
+    updated: new Date().toISOString(),
     tips,
     spy,
     goldMacro,
-
     table: results,
-
     invested
   };
 
@@ -316,23 +421,12 @@ async function run() {
     JSON.stringify(output, null, 2)
   );
 
- await sendDiscord(
-  results,
-  tips,
-  spy,
-  goldMacro
-);
+  await sendDiscord(results);
 
-console.log("DONE 1xGTAA");
+  console.log("DONE 1xGTAA");
 }
 
-async function sendDiscord(
-  results,
-  tips,
-  spy,
-  goldMacro
-) {
-
+async function sendDiscord(results) {
   if (!process.env.GTAA_WEBHOOK) {
     console.log("NO WEBHOOK FOUND");
     return;
@@ -340,7 +434,6 @@ async function sendDiscord(
 
   const lines =
     results.map(r => {
-
       const marker =
         r.slot === 1
           ? "🔹"
@@ -359,15 +452,11 @@ async function sendDiscord(
   await fetch(
     process.env.GTAA_WEBHOOK,
     {
-
       method: "POST",
-
       headers: {
         "Content-Type": "application/json"
       },
-
       body: JSON.stringify({
-
         content:
           `📊 1xGTAA Signale\n\n` +
           `${lines}\n\n` +
