@@ -174,6 +174,10 @@ async function load() {
 
       <tr class="${rowClass}">
 
+        <td title="Kursdatum: ${d.currentDate || "-"}">
+          ${d.fresh ? "✅" : "❌"}
+        </td>
+
         <td>${d.rank}</td>
 
         <td>${d.name}</td>
@@ -290,7 +294,7 @@ async function load() {
 
       <tr>
 
-        <td>S&P500 (EUR)</td>
+        <td>S&P500 (EUR hedged)</td>
 
         <td>-</td>
         <td>-</td>
