@@ -82,6 +82,31 @@ function yesterdayBerlinString() {
   return toDateString(d);
 }
 
+function lastWeekdayOnOrBefore(dateString) {
+  const [year, month, day] =
+    dateString.split("-").map(Number);
+
+  const d =
+    new Date(Date.UTC(year, month - 1, day));
+
+  while (d.getUTCDay() === 0 || d.getUTCDay() === 6) {
+    d.setUTCDate(d.getUTCDate() - 1);
+  }
+
+  return toDateString(d);
+}
+
+function expectedFreshDateForAsset(asset) {
+  const yesterday =
+    yesterdayBerlinString();
+
+  if (asset.type === "BTC") {
+    return yesterday;
+  }
+
+  return lastWeekdayOnOrBefore(yesterday);
+}
+
 function subtractMonths(dateString, months) {
   const [year, month, day] =
     dateString.split("-").map(Number);
@@ -125,6 +150,19 @@ function getCleanPointsUntilYesterday(points) {
   return points
     .filter(p => p.date <= maxDate)
     .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function addFreshStatus(results) {
+  return results.map(r => {
+    const expectedDate =
+      expectedFreshDateForAsset(r);
+
+    return {
+      ...r,
+      expectedDate,
+      fresh: r.currentDate >= expectedDate
+    };
+  });
 }
 
 function loadState() {
@@ -414,6 +452,12 @@ async function run() {
       rank: idx + 1
     }));
 
+  results =
+    addFreshStatus(results);
+
+  const needsRetry =
+    results.some(r => !r.fresh);
+
   const today =
     new Date();
 
@@ -493,6 +537,7 @@ async function run() {
 
   const output = {
     updated: today.toISOString(),
+    needsRetry,
     tips,
     spy,
     goldMacro,
@@ -511,6 +556,11 @@ async function run() {
 }
 
 async function sendDiscord(results, tips, spy, goldMacro) {
+  if (process.env.SKIP_DISCORD === "1") {
+    console.log("SKIP DISCORD");
+    return;
+  }
+
   if (!process.env.GTAA_WEBHOOK) {
     console.log("NO WEBHOOK FOUND");
     return;
@@ -535,6 +585,7 @@ async function sendDiscord(results, tips, spy, goldMacro) {
 
       return (
         `${marker} #${r.rank} ${r.name}\n` +
+        `Daten: ${r.fresh ? "✅" : "❌"} ${r.currentDate}\n` +
         `Momentum: ${r.momentum.toFixed(2)} | ` +
         `SMA150: ${r.sma150Pct.toFixed(2)} | ` +
         `SMA20>SMA150: ${r.sma20Pct.toFixed(2)}`
