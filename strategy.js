@@ -100,7 +100,13 @@ function expectedFreshDateForAsset(asset) {
   const yesterday =
     yesterdayBerlinString();
 
-  if (asset.type === "BTC") {
+   if (
+    asset.type === "BTC" ||
+    asset.type === "USDLONG" ||
+    asset.type === "USDSHORT" ||
+    asset.symbol === "USDEUR=X" ||
+    asset.symbol === "EURUSD=X"
+  ) {
     return yesterday;
   }
 
