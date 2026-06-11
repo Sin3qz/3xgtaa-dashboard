@@ -25,3 +25,60 @@ jobs:
           SKIP_DISCORD=1 node strategy1x.js
 
       - name: Check if retry is needed after first attempt
+        id: retry1
+        run: |
+          NEEDS_RETRY=$(node -e "
+            const fs = require('fs');
+            const a = JSON.parse(fs.readFileSync('signals.json', 'utf8')).needsRetry;
+            const b = JSON.parse(fs.readFileSync('signals1x.json', 'utf8')).needsRetry;
+            console.log(a || b ? 'true' : 'false');
+          ")
+          echo "needs_retry=$NEEDS_RETRY" >> $GITHUB_OUTPUT
+          echo "Retry needed after first attempt: $NEEDS_RETRY"
+
+      - name: Wait before second attempt
+        if: steps.retry1.outputs.needs_retry == 'true'
+        run: sleep 3600
+
+      - name: Run second attempt without Discord
+        if: steps.retry1.outputs.needs_retry == 'true'
+        run: |
+          SKIP_DISCORD=1 node strategy.js
+          SKIP_DISCORD=1 node strategy1x.js
+
+      - name: Check if retry is needed after second attempt
+        id: retry2
+        run: |
+          NEEDS_RETRY=$(node -e "
+            const fs = require('fs');
+            const a = JSON.parse(fs.readFileSync('signals.json', 'utf8')).needsRetry;
+            const b = JSON.parse(fs.readFileSync('signals1x.json', 'utf8')).needsRetry;
+            console.log(a || b ? 'true' : 'false');
+          ")
+          echo "needs_retry=$NEEDS_RETRY" >> $GITHUB_OUTPUT
+          echo "Retry needed after second attempt: $NEEDS_RETRY"
+
+      - name: Wait before third attempt
+        if: steps.retry2.outputs.needs_retry == 'true'
+        run: sleep 3600
+
+      - name: Run third attempt with Discord
+        if: steps.retry2.outputs.needs_retry == 'true'
+        run: |
+          node strategy.js
+          node strategy1x.js
+
+      - name: Run final Discord notification if no third attempt was needed
+        if: steps.retry2.outputs.needs_retry != 'true'
+        run: |
+          node strategy.js
+          node strategy1x.js
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "bot"
+          git config user.email "bot@bot.com"
+
+          git add signals.json signals1x.json state.json
+          git commit -m "update signals" || echo "no changes"
+          git push
