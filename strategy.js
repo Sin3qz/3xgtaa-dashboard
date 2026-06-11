@@ -100,10 +100,11 @@ function expectedFreshDateForAsset(asset) {
   const yesterday =
     yesterdayBerlinString();
 
-   if (
+  if (
     asset.type === "BTC" ||
     asset.type === "USDLONG" ||
     asset.type === "USDSHORT" ||
+    asset.symbol === "BTC-EUR" ||
     asset.symbol === "USDEUR=X" ||
     asset.symbol === "EURUSD=X"
   ) {
@@ -158,17 +159,128 @@ function getCleanPointsUntilYesterday(points) {
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-function addFreshStatus(results) {
+function loadPreviousOutput(fileName) {
+  if (!fs.existsSync(fileName)) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(
+      fs.readFileSync(fileName, "utf8")
+    );
+  } catch (e) {
+    return null;
+  }
+}
+
+function hasMeaningfulChange(current, previous) {
+  if (!previous) {
+    return false;
+  }
+
+  const fields = [
+    "current",
+    "m1",
+    "m3",
+    "m6",
+    "m9",
+    "momentum",
+    "sma150Pct",
+    "sma20Pct"
+  ];
+
+  return fields.some(field => {
+    if (
+      typeof current[field] !== "number" ||
+      typeof previous[field] !== "number"
+    ) {
+      return false;
+    }
+
+    return Math.abs(current[field] - previous[field]) > 0.000001;
+  });
+}
+
+function hasMacroChange(current, previous) {
+  if (!previous) {
+    return false;
+  }
+
+  const fields = [
+    "current",
+    "sma200",
+    "sma200Pct",
+    "sma150",
+    "sma150Pct"
+  ];
+
+  return fields.some(field => {
+    if (
+      typeof current[field] !== "number" ||
+      typeof previous[field] !== "number"
+    ) {
+      return false;
+    }
+
+    return Math.abs(current[field] - previous[field]) > 0.000001;
+  });
+}
+
+function addFreshStatus(results, previousOutput) {
+  const previousTable =
+    previousOutput && previousOutput.table
+      ? previousOutput.table
+      : [];
+
   return results.map(r => {
     const expectedDate =
       expectedFreshDateForAsset(r);
 
+    const previous =
+      previousTable.find(
+        p =>
+          p.symbol === r.symbol ||
+          p.name === r.name
+      );
+
+    const plausibleDate =
+      r.currentDate >= expectedDate;
+
+    const valueChanged =
+      hasMeaningfulChange(r, previous);
+
     return {
       ...r,
       expectedDate,
-      fresh: r.currentDate >= expectedDate
+      valueChanged,
+      fresh: plausibleDate || valueChanged
     };
   });
+}
+
+function addFreshStatusToMacro(macro, previousMacro, type) {
+  if (!macro) {
+    return macro;
+  }
+
+  const expectedDate =
+    expectedFreshDateForAsset({
+      symbol: macro.symbol,
+      type
+    });
+
+  const plausibleDate =
+    macro.currentDate >= expectedDate;
+
+  const valueChanged =
+    hasMacroChange(macro, previousMacro);
+
+  return {
+    ...macro,
+    expectedDate,
+    valueChanged,
+    fresh: plausibleDate || valueChanged
+  };
 }
 
 function loadState() {
@@ -354,11 +466,14 @@ async function getTipsData() {
   const points =
     getCleanPointsUntilYesterday(await fetchData("IBC5.DE"));
 
+  const currentPoint =
+    points.at(-1);
+
   const closes =
     points.map(p => p.close);
 
   const current =
-    closes.at(-1);
+    currentPoint.close;
 
   const sma200 =
     sma(closes, 200);
@@ -368,6 +483,7 @@ async function getTipsData() {
 
   return {
     symbol: "IBC5.DE",
+    currentDate: currentPoint.date,
     current,
     sma200,
     sma200Pct
@@ -378,11 +494,14 @@ async function getSpyData() {
   const points =
     getCleanPointsUntilYesterday(await fetchData("IBCF.DE"));
 
+  const currentPoint =
+    points.at(-1);
+
   const closes =
     points.map(p => p.close);
 
   const current =
-    closes.at(-1);
+    currentPoint.close;
 
   const sma150 =
     sma(closes, 150);
@@ -392,6 +511,7 @@ async function getSpyData() {
 
   return {
     symbol: "IBCF.DE",
+    currentDate: currentPoint.date,
     current,
     sma150,
     sma150Pct
@@ -402,11 +522,14 @@ async function getGoldMacroData() {
   const points =
     getCleanPointsUntilYesterday(await fetchData("4GLD.DE"));
 
+  const currentPoint =
+    points.at(-1);
+
   const closes =
     points.map(p => p.close);
 
   const current =
-    closes.at(-1);
+    currentPoint.close;
 
   const sma150 =
     sma(closes, 150);
@@ -416,6 +539,7 @@ async function getGoldMacroData() {
 
   return {
     symbol: "4GLD.DE",
+    currentDate: currentPoint.date,
     current,
     sma150,
     sma150Pct
@@ -424,6 +548,9 @@ async function getGoldMacroData() {
 
 async function run() {
   let results = [];
+
+  const previousOutput =
+    loadPreviousOutput("signals.json");
 
   for (const a of assets) {
     try {
@@ -459,10 +586,7 @@ async function run() {
     }));
 
   results =
-    addFreshStatus(results);
-
-  const needsRetry =
-    results.some(r => !r.fresh);
+    addFreshStatus(results, previousOutput);
 
   const today =
     new Date();
@@ -522,6 +646,11 @@ async function run() {
 
   try {
     tips = await getTipsData();
+    tips = addFreshStatusToMacro(
+      tips,
+      previousOutput ? previousOutput.tips : null,
+      "MACRO"
+    );
   } catch (e) {
     console.log("ERROR TIPS");
     console.log(e.message);
@@ -529,6 +658,11 @@ async function run() {
 
   try {
     spy = await getSpyData();
+    spy = addFreshStatusToMacro(
+      spy,
+      previousOutput ? previousOutput.spy : null,
+      "MACRO"
+    );
   } catch (e) {
     console.log("ERROR SPY");
     console.log(e.message);
@@ -536,10 +670,21 @@ async function run() {
 
   try {
     goldMacro = await getGoldMacroData();
+    goldMacro = addFreshStatusToMacro(
+      goldMacro,
+      previousOutput ? previousOutput.goldMacro : null,
+      "MACRO"
+    );
   } catch (e) {
     console.log("ERROR GOLD");
     console.log(e.message);
   }
+
+  const needsRetry =
+    results.some(r => !r.fresh) ||
+    (tips && !tips.fresh) ||
+    (spy && !spy.fresh) ||
+    (goldMacro && !goldMacro.fresh);
 
   const output = {
     updated: today.toISOString(),
@@ -573,15 +718,15 @@ async function sendDiscord(results, tips, spy, goldMacro) {
   }
 
   const tipsText = tips
-    ? `TIPS: ${tips.sma200Pct >= 0 ? "+" : ""}${tips.sma200Pct.toFixed(2)}% ${tips.sma200Pct >= 0 ? "über SMA200" : "unter SMA200"}`
+    ? `${tips.fresh ? "✅" : "❌"} TIPS: ${tips.sma200Pct >= 0 ? "+" : ""}${tips.sma200Pct.toFixed(2)}% ${tips.sma200Pct >= 0 ? "über SMA200" : "unter SMA200"}`
     : "TIPS: keine Daten";
 
   const spyText = spy
-    ? `S&P500 (EUR hedged): ${spy.sma150Pct >= 0 ? "+" : ""}${spy.sma150Pct.toFixed(2)}% ${spy.sma150Pct >= 0 ? "über SMA150" : "unter SMA150"}`
+    ? `${spy.fresh ? "✅" : "❌"} S&P500 (EUR hedged): ${spy.sma150Pct >= 0 ? "+" : ""}${spy.sma150Pct.toFixed(2)}% ${spy.sma150Pct >= 0 ? "über SMA150" : "unter SMA150"}`
     : "S&P500: keine Daten";
 
   const goldText = goldMacro
-    ? `Gold: ${goldMacro.sma150Pct >= 0 ? "+" : ""}${goldMacro.sma150Pct.toFixed(2)}% ${goldMacro.sma150Pct >= 0 ? "über SMA150" : "unter SMA150"}`
+    ? `${goldMacro.fresh ? "✅" : "❌"} Gold: ${goldMacro.sma150Pct >= 0 ? "+" : ""}${goldMacro.sma150Pct.toFixed(2)}% ${goldMacro.sma150Pct >= 0 ? "über SMA150" : "unter SMA150"}`
     : "Gold: keine Daten";
 
   const lines =
