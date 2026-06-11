@@ -5,6 +5,9 @@ on:
     - cron: "0 1 * * *"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -24,21 +27,24 @@ jobs:
           SKIP_DISCORD=1 node strategy.js
           SKIP_DISCORD=1 node strategy1x.js
 
-      - name: Check if retry is needed after first attempt
+      - name: Check retry after first attempt
         id: retry1
         run: |
-          NEEDS_RETRY=$(node -e "
-            const fs = require('fs');
-            const a = JSON.parse(fs.readFileSync('signals.json', 'utf8')).needsRetry;
-            const b = JSON.parse(fs.readFileSync('signals1x.json', 'utf8')).needsRetry;
-            console.log(a || b ? 'true' : 'false');
-          ")
-          echo "needs_retry=$NEEDS_RETRY" >> $GITHUB_OUTPUT
+          NEEDS_RETRY=$(node <<'NODE'
+          const fs = require("fs");
+          const s3 = JSON.parse(fs.readFileSync("signals.json", "utf8"));
+          const s1 = JSON.parse(fs.readFileSync("signals1x.json", "utf8"));
+          console.log(s3.needsRetry || s1.needsRetry ? "true" : "false");
+          NODE
+          )
+
+          echo "needs_retry=$NEEDS_RETRY" >> "$GITHUB_OUTPUT"
           echo "Retry needed after first attempt: $NEEDS_RETRY"
 
       - name: Wait before second attempt
         if: steps.retry1.outputs.needs_retry == 'true'
-        run: sleep 3600
+        run: |
+          sleep 3600
 
       - name: Run second attempt without Discord
         if: steps.retry1.outputs.needs_retry == 'true'
@@ -46,30 +52,26 @@ jobs:
           SKIP_DISCORD=1 node strategy.js
           SKIP_DISCORD=1 node strategy1x.js
 
-      - name: Check if retry is needed after second attempt
+      - name: Check retry after second attempt
         id: retry2
         run: |
-          NEEDS_RETRY=$(node -e "
-            const fs = require('fs');
-            const a = JSON.parse(fs.readFileSync('signals.json', 'utf8')).needsRetry;
-            const b = JSON.parse(fs.readFileSync('signals1x.json', 'utf8')).needsRetry;
-            console.log(a || b ? 'true' : 'false');
-          ")
-          echo "needs_retry=$NEEDS_RETRY" >> $GITHUB_OUTPUT
+          NEEDS_RETRY=$(node <<'NODE'
+          const fs = require("fs");
+          const s3 = JSON.parse(fs.readFileSync("signals.json", "utf8"));
+          const s1 = JSON.parse(fs.readFileSync("signals1x.json", "utf8"));
+          console.log(s3.needsRetry || s1.needsRetry ? "true" : "false");
+          NODE
+          )
+
+          echo "needs_retry=$NEEDS_RETRY" >> "$GITHUB_OUTPUT"
           echo "Retry needed after second attempt: $NEEDS_RETRY"
 
       - name: Wait before third attempt
         if: steps.retry2.outputs.needs_retry == 'true'
-        run: sleep 3600
-
-      - name: Run third attempt with Discord
-        if: steps.retry2.outputs.needs_retry == 'true'
         run: |
-          node strategy.js
-          node strategy1x.js
+          sleep 3600
 
-      - name: Run final Discord notification if no third attempt was needed
-        if: steps.retry2.outputs.needs_retry != 'true'
+      - name: Run final attempt with Discord
         run: |
           node strategy.js
           node strategy1x.js
