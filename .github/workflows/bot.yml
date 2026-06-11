@@ -69,7 +69,7 @@ jobs:
       - name: Wait before third attempt
         if: steps.retry2.outputs.needs_retry == 'true'
         run: |
-          sleep 3600
+          sleep 60
 
       - name: Run final attempt with Discord
         run: |
