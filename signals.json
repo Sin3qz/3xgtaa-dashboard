@@ -1,5 +1,6 @@
 {
-  "updated": "2026-06-11T05:26:07.289Z",
+  "updated": "2026-06-11T15:28:40.750Z",
+  "needsRetry": true,
   "tips": {
     "symbol": "IBC5.DE",
     "current": 5.39739990234375,
@@ -42,6 +43,8 @@
       "sma20Pct": 35.7369706654298,
       "valid": true,
       "rank": 1,
+      "expectedDate": "2026-06-10",
+      "fresh": true,
       "invested": true
     },
     {
@@ -67,6 +70,8 @@
       "sma20Pct": 13.783400536917757,
       "valid": true,
       "rank": 2,
+      "expectedDate": "2026-06-10",
+      "fresh": true,
       "invested": true
     },
     {
@@ -92,6 +97,8 @@
       "sma20Pct": 13.421547777367815,
       "valid": true,
       "rank": 3,
+      "expectedDate": "2026-06-10",
+      "fresh": true,
       "invested": true
     },
     {
@@ -117,6 +124,8 @@
       "sma20Pct": 4.1491505649895455,
       "valid": true,
       "rank": 4,
+      "expectedDate": "2026-06-10",
+      "fresh": true,
       "invested": false
     },
     {
@@ -142,6 +151,8 @@
       "sma20Pct": 0.5224591809886325,
       "valid": true,
       "rank": 5,
+      "expectedDate": "2026-06-10",
+      "fresh": false,
       "invested": false
     },
     {
@@ -167,6 +178,8 @@
       "sma20Pct": -0.5271641805702942,
       "valid": false,
       "rank": 6,
+      "expectedDate": "2026-06-10",
+      "fresh": false,
       "invested": false
     },
     {
@@ -192,6 +205,8 @@
       "sma20Pct": -2.280753203898922,
       "valid": false,
       "rank": 7,
+      "expectedDate": "2026-06-10",
+      "fresh": true,
       "invested": false
     },
     {
@@ -217,31 +232,35 @@
       "sma20Pct": -3.910547610922821,
       "valid": false,
       "rank": 8,
+      "expectedDate": "2026-06-10",
+      "fresh": true,
       "invested": false
     },
     {
       "name": "Bitcoin",
       "symbol": "BTC-EUR",
       "type": "BTC",
-      "currentDate": "2026-06-09",
-      "p1Date": "2026-05-09",
-      "p3Date": "2026-03-09",
-      "p6Date": "2025-12-09",
-      "p9Date": "2025-09-09",
-      "current": 53440.2265625,
-      "p1m": 68436.6796875,
-      "p3m": 58884.87890625,
-      "p6m": 79714.21875,
-      "p9m": 95307.3125,
-      "m1": -21.91288822525841,
-      "m3": -9.246265671053466,
-      "m6": -32.96023294150393,
-      "m9": -43.92851381419448,
-      "momentum": -108.0479006520103,
-      "sma150Pct": -16.168239288777432,
-      "sma20Pct": -5.134146507420557,
+      "currentDate": "2026-06-10",
+      "p1Date": "2026-05-10",
+      "p3Date": "2026-03-10",
+      "p6Date": "2025-12-10",
+      "p9Date": "2025-09-10",
+      "current": 53270.6328125,
+      "p1m": 69802.40625,
+      "p3m": 60221.0625,
+      "p6m": 78640.2734375,
+      "p9m": 97376.90625,
+      "m1": -23.683672706483527,
+      "m3": -11.541526168688899,
+      "m6": -32.26036675109316,
+      "m9": -45.29438769009978,
+      "momentum": -112.77995331636536,
+      "sma150Pct": -16.216388129616387,
+      "sma20Pct": -5.945830062144941,
       "valid": false,
       "rank": 9,
+      "expectedDate": "2026-06-10",
+      "fresh": true,
       "invested": false
     }
   ],

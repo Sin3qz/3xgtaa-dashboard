@@ -1,5 +1,6 @@
 {
-  "updated": "2026-06-11T05:26:09.026Z",
+  "updated": "2026-06-11T15:28:42.058Z",
+  "needsRetry": false,
   "tips": {
     "symbol": "IBC5.DE",
     "current": 5.39739990234375,
@@ -42,6 +43,8 @@
       "sma20Pct": 13.47036150430414,
       "valid": true,
       "rank": 1,
+      "expectedDate": "2026-06-10",
+      "fresh": true,
       "invested": true,
       "slot": 1
     },
@@ -68,6 +71,8 @@
       "sma20Pct": 14.770022777948766,
       "valid": true,
       "rank": 2,
+      "expectedDate": "2026-06-10",
+      "fresh": true,
       "invested": true,
       "slot": 2
     },
@@ -94,6 +99,8 @@
       "sma20Pct": 5.418721901836321,
       "valid": true,
       "rank": 3,
+      "expectedDate": "2026-06-10",
+      "fresh": true,
       "invested": false,
       "slot": 0
     },
@@ -120,6 +127,8 @@
       "sma20Pct": 8.179546814183446,
       "valid": true,
       "rank": 4,
+      "expectedDate": "2026-06-10",
+      "fresh": true,
       "invested": false,
       "slot": 0
     },
@@ -146,6 +155,8 @@
       "sma20Pct": 1.4847775122619256,
       "valid": true,
       "rank": 5,
+      "expectedDate": "2026-06-10",
+      "fresh": true,
       "invested": false,
       "slot": 0
     },
@@ -172,6 +183,8 @@
       "sma20Pct": -0.42782806000407625,
       "valid": false,
       "rank": 6,
+      "expectedDate": "2026-06-10",
+      "fresh": true,
       "invested": false,
       "slot": 0
     },
@@ -198,6 +211,8 @@
       "sma20Pct": -2.3161162182036343,
       "valid": false,
       "rank": 7,
+      "expectedDate": "2026-06-10",
+      "fresh": true,
       "invested": false,
       "slot": 0
     }
