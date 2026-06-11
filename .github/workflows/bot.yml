@@ -19,13 +19,9 @@ jobs:
         with:
           node-version: 20
 
-      - run: node strategy.js
+      - name: Run first attempt without Discord
+        run: |
+          SKIP_DISCORD=1 node strategy.js
+          SKIP_DISCORD=1 node strategy1x.js
 
-      - run: node strategy1x.js
-
-      - run: |
-          git config user.name "bot"
-          git config user.email "bot@bot.com"
-          git add signals.json signals1x.json state.json
-          git commit -m "update signals" || echo "no changes"
-          git push
+      - name: Check if retry is needed after first attempt
