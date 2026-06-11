@@ -22,8 +22,6 @@ async function load() {
   prices.innerHTML = "";
   tipsBox.innerHTML = "";
 
-  // LETZTES UPDATE
-
   if (data.updated && lastUpdate) {
 
     const date =
@@ -55,20 +53,19 @@ async function load() {
     `;
   }
 
-  // TIPS
   if (data.tips) {
 
     tipsBox.innerHTML += `
 
       <div class="tips-title">
-        TIPS (EUR hedged)
+        ${data.tips.fresh ? "✅" : "❌"} TIPS (EUR hedged)
       </div>
 
       <div class="${
         data.tips.sma200Pct >= 0
           ? "green"
           : "red"
-      }">
+      }" title="Kursdatum: ${data.tips.currentDate || "-"}">
 
         ${
           data.tips.sma200Pct >= 0
@@ -88,7 +85,6 @@ async function load() {
     `;
   }
 
-  // SP500 EUR
   if (data.spy) {
 
     tipsBox.innerHTML += `
@@ -96,14 +92,14 @@ async function load() {
       <br>
 
       <div class="tips-title">
-        S&P500 (EUR hedged)
+        ${data.spy.fresh ? "✅" : "❌"} S&P500 (EUR hedged)
       </div>
 
       <div class="${
         data.spy.sma150Pct >= 0
           ? "green"
           : "red"
-      }">
+      }" title="Kursdatum: ${data.spy.currentDate || "-"}">
 
         ${
           data.spy.sma150Pct >= 0
@@ -123,7 +119,6 @@ async function load() {
     `;
   }
 
-  // GOLD
   if (data.goldMacro) {
 
     tipsBox.innerHTML += `
@@ -131,14 +126,14 @@ async function load() {
       <br>
 
       <div class="tips-title">
-        Gold (EUR)
+        ${data.goldMacro.fresh ? "✅" : "❌"} Gold (EUR)
       </div>
 
       <div class="${
         data.goldMacro.sma150Pct >= 0
           ? "green"
           : "red"
-      }">
+      }" title="Kursdatum: ${data.goldMacro.currentDate || "-"}">
 
         ${
           data.goldMacro.sma150Pct >= 0
@@ -158,7 +153,6 @@ async function load() {
     `;
   }
 
-  // Dashboard
   data.table.forEach(d => {
 
     let rowClass = "";
@@ -257,8 +251,6 @@ async function load() {
       </tr>
     `;
   });
-
-  // Makro-Tabelle
 
   if (data.tips) {
 
