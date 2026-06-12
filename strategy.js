@@ -82,6 +82,16 @@ function yesterdayBerlinString() {
   return toDateString(d);
 }
 
+function isWeekend(dateString) {
+  const [year, month, day] =
+    dateString.split("-").map(Number);
+
+  const d =
+    new Date(Date.UTC(year, month - 1, day));
+
+  return d.getUTCDay() === 0 || d.getUTCDay() === 6;
+}
+
 function lastWeekdayOnOrBefore(dateString) {
   const [year, month, day] =
     dateString.split("-").map(Number);
@@ -96,18 +106,35 @@ function lastWeekdayOnOrBefore(dateString) {
   return toDateString(d);
 }
 
+function isCryptoAsset(asset) {
+  return (
+    asset.type === "BTC" ||
+    asset.symbol === "BTC-EUR"
+  );
+}
+
+function isFxAsset(asset) {
+  return (
+    asset.type === "USDLONG" ||
+    asset.type === "USDSHORT" ||
+    asset.symbol === "USDEUR=X" ||
+    asset.symbol === "EURUSD=X"
+  );
+}
+
 function expectedFreshDateForAsset(asset) {
   const yesterday =
     yesterdayBerlinString();
 
-  if (
-    asset.type === "BTC" ||
-    asset.type === "USDLONG" ||
-    asset.type === "USDSHORT" ||
-    asset.symbol === "BTC-EUR" ||
-    asset.symbol === "USDEUR=X" ||
-    asset.symbol === "EURUSD=X"
-  ) {
+  if (isCryptoAsset(asset)) {
+    return yesterday;
+  }
+
+  if (isFxAsset(asset)) {
+    if (isWeekend(yesterday)) {
+      return lastWeekdayOnOrBefore(yesterday);
+    }
+
     return yesterday;
   }
 
@@ -159,22 +186,8 @@ function getCleanPointsUntilYesterday(points) {
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-function loadPreviousOutput(fileName) {
-  if (!fs.existsSync(fileName)) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(
-      fs.readFileSync(fileName, "utf8")
-    );
-  } catch (e) {
-    return null;
-  }
-}
-
-function hasMeaningfulChange(current, previous) {
-  if (!previous) {
+function valuesChanged(a, b) {
+  if (!a || !b) {
     return false;
   }
 
@@ -189,98 +202,25 @@ function hasMeaningfulChange(current, previous) {
     "sma20Pct"
   ];
 
-  return fields.some(field => {
-    if (
-      typeof current[field] !== "number" ||
-      typeof previous[field] !== "number"
-    ) {
-      return false;
-    }
-
-    return Math.abs(current[field] - previous[field]) > 0.000001;
-  });
+  return fields.some(field =>
+    Math.abs(a[field] - b[field]) > 0.000001
+  );
 }
 
-function hasMacroChange(current, previous) {
-  if (!previous) {
+function macroValuesChanged(a, b) {
+  if (!a || !b) {
     return false;
   }
 
   const fields = [
     "current",
-    "sma200",
-    "sma200Pct",
-    "sma150",
-    "sma150Pct"
+    "sma",
+    "smaPct"
   ];
 
-  return fields.some(field => {
-    if (
-      typeof current[field] !== "number" ||
-      typeof previous[field] !== "number"
-    ) {
-      return false;
-    }
-
-    return Math.abs(current[field] - previous[field]) > 0.000001;
-  });
-}
-
-function addFreshStatus(results, previousOutput) {
-  const previousTable =
-    previousOutput && previousOutput.table
-      ? previousOutput.table
-      : [];
-
-  return results.map(r => {
-    const expectedDate =
-      expectedFreshDateForAsset(r);
-
-    const previous =
-      previousTable.find(
-        p =>
-          p.symbol === r.symbol ||
-          p.name === r.name
-      );
-
-    const plausibleDate =
-      r.currentDate >= expectedDate;
-
-    const valueChanged =
-      hasMeaningfulChange(r, previous);
-
-    return {
-      ...r,
-      expectedDate,
-      valueChanged,
-      fresh: plausibleDate || valueChanged
-    };
-  });
-}
-
-function addFreshStatusToMacro(macro, previousMacro, type) {
-  if (!macro) {
-    return macro;
-  }
-
-  const expectedDate =
-    expectedFreshDateForAsset({
-      symbol: macro.symbol,
-      type
-    });
-
-  const plausibleDate =
-    macro.currentDate >= expectedDate;
-
-  const valueChanged =
-    hasMacroChange(macro, previousMacro);
-
-  return {
-    ...macro,
-    expectedDate,
-    valueChanged,
-    fresh: plausibleDate || valueChanged
-  };
+  return fields.some(field =>
+    Math.abs(a[field] - b[field]) > 0.000001
+  );
 }
 
 function loadState() {
@@ -366,15 +306,12 @@ function buildInvestments(results, previousPairType) {
   return selected.slice(0, 3);
 }
 
-function calculateAssetMetrics(asset, pointsRaw) {
-  const points = getCleanPointsUntilYesterday(pointsRaw);
-
-  if (!points || points.length < 220) {
-    return null;
-  }
-
+function calculateMetricsAtIndex(asset, points, index) {
   const currentPoint =
-    points[points.length - 1];
+    points[index];
+
+  const usablePoints =
+    points.slice(0, index + 1);
 
   const current =
     currentPoint.close;
@@ -383,23 +320,23 @@ function calculateAssetMetrics(asset, pointsRaw) {
     currentPoint.date;
 
   const p1 =
-    getPointOnOrBefore(points, subtractMonths(baseDate, 1));
+    getPointOnOrBefore(usablePoints, subtractMonths(baseDate, 1));
 
   const p3 =
-    getPointOnOrBefore(points, subtractMonths(baseDate, 3));
+    getPointOnOrBefore(usablePoints, subtractMonths(baseDate, 3));
 
   const p6 =
-    getPointOnOrBefore(points, subtractMonths(baseDate, 6));
+    getPointOnOrBefore(usablePoints, subtractMonths(baseDate, 6));
 
   const p9 =
-    getPointOnOrBefore(points, subtractMonths(baseDate, 9));
+    getPointOnOrBefore(usablePoints, subtractMonths(baseDate, 9));
 
   if (!p1 || !p3 || !p6 || !p9) {
     return null;
   }
 
   const closes =
-    points.map(p => p.close);
+    usablePoints.map(p => p.close);
 
   const sma150 =
     sma(closes, 150);
@@ -462,95 +399,200 @@ function calculateAssetMetrics(asset, pointsRaw) {
   };
 }
 
-async function getTipsData() {
+function calculateAssetMetrics(asset, pointsRaw) {
+  const points = getCleanPointsUntilYesterday(pointsRaw);
+
+  if (!points || points.length < 220) {
+    return null;
+  }
+
+  const currentMetrics =
+    calculateMetricsAtIndex(asset, points, points.length - 1);
+
+  const previousMetrics =
+    calculateMetricsAtIndex(asset, points, points.length - 2);
+
+  if (!currentMetrics) {
+    return null;
+  }
+
+  const valueChanged =
+    valuesChanged(currentMetrics, previousMetrics);
+
+  return {
+    ...currentMetrics,
+    previousDate: previousMetrics ? previousMetrics.currentDate : null,
+    valueChanged
+  };
+}
+
+function addFreshStatus(results) {
+  return results.map(r => {
+    const expectedDate =
+      expectedFreshDateForAsset(r);
+
+    const plausibleDate =
+      r.currentDate >= expectedDate;
+
+    return {
+      ...r,
+      expectedDate,
+      plausibleDate,
+      fresh: plausibleDate && r.valueChanged
+    };
+  });
+}
+
+function calculateMacroMetrics(pointsRaw, smaLength) {
   const points =
-    getCleanPointsUntilYesterday(await fetchData("IBC5.DE"));
+    getCleanPointsUntilYesterday(pointsRaw);
+
+  if (!points || points.length < smaLength + 2) {
+    return null;
+  }
 
   const currentPoint =
     points.at(-1);
 
-  const closes =
+  const previousPoint =
+    points.at(-2);
+
+  const currentCloses =
     points.map(p => p.close);
+
+  const previousCloses =
+    points.slice(0, -1).map(p => p.close);
 
   const current =
     currentPoint.close;
 
-  const sma200 =
-    sma(closes, 200);
+  const previous =
+    previousPoint.close;
 
-  const sma200Pct =
-    pct(current, sma200);
+  const currentSma =
+    sma(currentCloses, smaLength);
+
+  const previousSma =
+    sma(previousCloses, smaLength);
+
+  const currentPct =
+    pct(current, currentSma);
+
+  const previousPct =
+    pct(previous, previousSma);
+
+  const currentMetrics = {
+    current,
+    sma: currentSma,
+    smaPct: currentPct
+  };
+
+  const previousMetrics = {
+    current: previous,
+    sma: previousSma,
+    smaPct: previousPct
+  };
+
+  return {
+    currentDate: currentPoint.date,
+    previousDate: previousPoint.date,
+    current,
+    sma: currentSma,
+    smaPct: currentPct,
+    valueChanged: macroValuesChanged(currentMetrics, previousMetrics)
+  };
+}
+
+function addFreshStatusToMacro(macro, type) {
+  if (!macro) {
+    return macro;
+  }
+
+  const expectedDate =
+    expectedFreshDateForAsset({
+      symbol: macro.symbol,
+      type
+    });
+
+  const plausibleDate =
+    macro.currentDate >= expectedDate;
+
+  return {
+    ...macro,
+    expectedDate,
+    plausibleDate,
+    fresh: plausibleDate && macro.valueChanged
+  };
+}
+
+async function getTipsData() {
+  const metrics =
+    calculateMacroMetrics(
+      await fetchData("IBC5.DE"),
+      200
+    );
+
+  if (!metrics) {
+    return null;
+  }
 
   return {
     symbol: "IBC5.DE",
-    currentDate: currentPoint.date,
-    current,
-    sma200,
-    sma200Pct
+    currentDate: metrics.currentDate,
+    previousDate: metrics.previousDate,
+    current: metrics.current,
+    sma200: metrics.sma,
+    sma200Pct: metrics.smaPct,
+    valueChanged: metrics.valueChanged
   };
 }
 
 async function getSpyData() {
-  const points =
-    getCleanPointsUntilYesterday(await fetchData("IBCF.DE"));
+  const metrics =
+    calculateMacroMetrics(
+      await fetchData("IBCF.DE"),
+      150
+    );
 
-  const currentPoint =
-    points.at(-1);
-
-  const closes =
-    points.map(p => p.close);
-
-  const current =
-    currentPoint.close;
-
-  const sma150 =
-    sma(closes, 150);
-
-  const sma150Pct =
-    pct(current, sma150);
+  if (!metrics) {
+    return null;
+  }
 
   return {
     symbol: "IBCF.DE",
-    currentDate: currentPoint.date,
-    current,
-    sma150,
-    sma150Pct
+    currentDate: metrics.currentDate,
+    previousDate: metrics.previousDate,
+    current: metrics.current,
+    sma150: metrics.sma,
+    sma150Pct: metrics.smaPct,
+    valueChanged: metrics.valueChanged
   };
 }
 
 async function getGoldMacroData() {
-  const points =
-    getCleanPointsUntilYesterday(await fetchData("4GLD.DE"));
+  const metrics =
+    calculateMacroMetrics(
+      await fetchData("4GLD.DE"),
+      150
+    );
 
-  const currentPoint =
-    points.at(-1);
-
-  const closes =
-    points.map(p => p.close);
-
-  const current =
-    currentPoint.close;
-
-  const sma150 =
-    sma(closes, 150);
-
-  const sma150Pct =
-    pct(current, sma150);
+  if (!metrics) {
+    return null;
+  }
 
   return {
     symbol: "4GLD.DE",
-    currentDate: currentPoint.date,
-    current,
-    sma150,
-    sma150Pct
+    currentDate: metrics.currentDate,
+    previousDate: metrics.previousDate,
+    current: metrics.current,
+    sma150: metrics.sma,
+    sma150Pct: metrics.smaPct,
+    valueChanged: metrics.valueChanged
   };
 }
 
 async function run() {
   let results = [];
-
-  const previousOutput =
-    loadPreviousOutput("signals.json");
 
   for (const a of assets) {
     try {
@@ -586,7 +628,7 @@ async function run() {
     }));
 
   results =
-    addFreshStatus(results, previousOutput);
+    addFreshStatus(results);
 
   const today =
     new Date();
@@ -648,7 +690,6 @@ async function run() {
     tips = await getTipsData();
     tips = addFreshStatusToMacro(
       tips,
-      previousOutput ? previousOutput.tips : null,
       "MACRO"
     );
   } catch (e) {
@@ -660,7 +701,6 @@ async function run() {
     spy = await getSpyData();
     spy = addFreshStatusToMacro(
       spy,
-      previousOutput ? previousOutput.spy : null,
       "MACRO"
     );
   } catch (e) {
@@ -672,7 +712,6 @@ async function run() {
     goldMacro = await getGoldMacroData();
     goldMacro = addFreshStatusToMacro(
       goldMacro,
-      previousOutput ? previousOutput.goldMacro : null,
       "MACRO"
     );
   } catch (e) {
