@@ -1,9 +1,9 @@
 {
-  "lastRebalance": "2026-06-01T14:46:57.246Z",
+  "lastRebalance": "2026-07-01T07:19:23.238Z",
   "invested": [
-    "WTI Oil",
     "Emerging Markets",
-    "Nasdaq 100"
+    "Nasdaq 100",
+    "WTI Oil"
   ],
   "pairHolding": "EM"
 }
