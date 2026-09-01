@@ -1,6 +1,6 @@
 {
-  "updated": "2026-08-31T20:39:14.392Z",
-  "needsRetry": false,
+  "updated": "2026-09-01T07:59:26.377Z",
+  "needsRetry": true,
   "tips": {
     "symbol": "IBC5.DE",
     "currentDate": "2026-08-28",
@@ -9,9 +9,9 @@
     "sma200": 5.397596001625061,
     "sma200Pct": -0.5668430653020917,
     "valueChanged": true,
-    "expectedDate": "2026-08-28",
-    "plausibleDate": true,
-    "fresh": true
+    "expectedDate": "2026-08-31",
+    "plausibleDate": false,
+    "fresh": false
   },
   "spy": {
     "symbol": "IBCF.DE",
@@ -21,9 +21,9 @@
     "sma150": 148.79320017496744,
     "sma150Pct": 7.091588213256861,
     "valueChanged": true,
-    "expectedDate": "2026-08-28",
-    "plausibleDate": true,
-    "fresh": true
+    "expectedDate": "2026-08-31",
+    "plausibleDate": false,
+    "fresh": false
   },
   "goldMacro": {
     "symbol": "4GLD.DE",
@@ -33,9 +33,9 @@
     "sma150": 126.2009336344401,
     "sma150Pct": 0.10227198238361712,
     "valueChanged": true,
-    "expectedDate": "2026-08-28",
-    "plausibleDate": true,
-    "fresh": true
+    "expectedDate": "2026-08-31",
+    "plausibleDate": false,
+    "fresh": false
   },
   "table": [
     {
@@ -63,9 +63,9 @@
       "previousDate": "2026-08-27",
       "valueChanged": true,
       "rank": 1,
-      "expectedDate": "2026-08-28",
-      "plausibleDate": true,
-      "fresh": true,
+      "expectedDate": "2026-08-31",
+      "plausibleDate": false,
+      "fresh": false,
       "invested": true
     },
     {
@@ -93,7 +93,37 @@
       "previousDate": "2026-08-27",
       "valueChanged": true,
       "rank": 2,
-      "expectedDate": "2026-08-28",
+      "expectedDate": "2026-08-31",
+      "plausibleDate": false,
+      "fresh": false,
+      "invested": true
+    },
+    {
+      "name": "Bitcoin",
+      "symbol": "BTC-EUR",
+      "type": "BTC",
+      "currentDate": "2026-08-31",
+      "p1Date": "2026-07-31",
+      "p3Date": "2026-05-31",
+      "p6Date": "2026-02-28",
+      "p9Date": "2025-11-30",
+      "current": 67608.5390625,
+      "p1m": 54447.8359375,
+      "p3m": 63162.203125,
+      "p6m": 56689.6875,
+      "p9m": 77918.8984375,
+      "m1": 24.171214334591753,
+      "m3": 7.03955168995698,
+      "m6": 19.260736906514087,
+      "m9": -13.232167781825233,
+      "momentum": 37.23933514923758,
+      "sma150Pct": 12.426590417105498,
+      "sma20Pct": 3.697525593917761,
+      "valid": true,
+      "previousDate": "2026-08-30",
+      "valueChanged": true,
+      "rank": 3,
+      "expectedDate": "2026-08-31",
       "plausibleDate": true,
       "fresh": true,
       "invested": true
@@ -122,11 +152,11 @@
       "valid": true,
       "previousDate": "2026-08-27",
       "valueChanged": true,
-      "rank": 3,
-      "expectedDate": "2026-08-28",
-      "plausibleDate": true,
-      "fresh": true,
-      "invested": true
+      "rank": 4,
+      "expectedDate": "2026-08-31",
+      "plausibleDate": false,
+      "fresh": false,
+      "invested": false
     },
     {
       "name": "EuroStoxx50",
@@ -152,40 +182,10 @@
       "valid": true,
       "previousDate": "2026-08-27",
       "valueChanged": true,
-      "rank": 4,
-      "expectedDate": "2026-08-28",
-      "plausibleDate": true,
-      "fresh": true,
-      "invested": false
-    },
-    {
-      "name": "Bitcoin",
-      "symbol": "BTC-EUR",
-      "type": "BTC",
-      "currentDate": "2026-08-30",
-      "p1Date": "2026-07-30",
-      "p3Date": "2026-05-30",
-      "p6Date": "2026-02-28",
-      "p9Date": "2025-11-30",
-      "current": 67019.1953125,
-      "p1m": 56169.26953125,
-      "p3m": 63236.44140625,
-      "p6m": 56689.6875,
-      "p9m": 77918.8984375,
-      "m1": 19.316480117680012,
-      "m3": 5.9819209021400255,
-      "m6": 18.22114086005502,
-      "m9": -13.988523122850394,
-      "momentum": 29.53101875702466,
-      "sma150Pct": 11.564264009442681,
-      "sma20Pct": 2.7621200338294516,
-      "valid": true,
-      "previousDate": "2026-08-29",
-      "valueChanged": true,
       "rank": 5,
-      "expectedDate": "2026-08-30",
-      "plausibleDate": true,
-      "fresh": true,
+      "expectedDate": "2026-08-31",
+      "plausibleDate": false,
+      "fresh": false,
       "invested": false
     },
     {
@@ -213,9 +213,9 @@
       "previousDate": "2026-08-27",
       "valueChanged": true,
       "rank": 6,
-      "expectedDate": "2026-08-28",
-      "plausibleDate": true,
-      "fresh": true,
+      "expectedDate": "2026-08-31",
+      "plausibleDate": false,
+      "fresh": false,
       "invested": false
     },
     {
@@ -243,9 +243,9 @@
       "previousDate": "2026-08-27",
       "valueChanged": true,
       "rank": 7,
-      "expectedDate": "2026-08-28",
-      "plausibleDate": true,
-      "fresh": true,
+      "expectedDate": "2026-08-31",
+      "plausibleDate": false,
+      "fresh": false,
       "invested": false
     },
     {
@@ -273,9 +273,9 @@
       "previousDate": "2026-08-27",
       "valueChanged": true,
       "rank": 8,
-      "expectedDate": "2026-08-28",
-      "plausibleDate": true,
-      "fresh": true,
+      "expectedDate": "2026-08-31",
+      "plausibleDate": false,
+      "fresh": false,
       "invested": false
     },
     {
@@ -303,15 +303,15 @@
       "previousDate": "2026-08-27",
       "valueChanged": true,
       "rank": 9,
-      "expectedDate": "2026-08-28",
-      "plausibleDate": true,
-      "fresh": true,
+      "expectedDate": "2026-08-31",
+      "plausibleDate": false,
+      "fresh": false,
       "invested": false
     }
   ],
   "invested": [
-    "Emerging Markets",
     "WTI Oil",
-    "Nasdaq 100"
+    "Emerging Markets",
+    "Bitcoin"
   ]
 }
