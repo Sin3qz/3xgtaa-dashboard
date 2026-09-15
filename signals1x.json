@@ -1,6 +1,6 @@
 {
-  "updated": "2026-09-14T07:43:26.138Z",
-  "needsRetry": false,
+  "updated": "2026-09-15T07:44:49.197Z",
+  "needsRetry": true,
   "tips": {
     "symbol": "IBC5.DE",
     "currentDate": "2026-09-11",
@@ -9,9 +9,9 @@
     "sma200": 5.3941660046577455,
     "sma200Pct": -1.6196408484919989,
     "valueChanged": true,
-    "expectedDate": "2026-09-11",
-    "plausibleDate": true,
-    "fresh": true
+    "expectedDate": "2026-09-14",
+    "plausibleDate": false,
+    "fresh": false
   },
   "spy": {
     "symbol": "IBCF.DE",
@@ -21,9 +21,9 @@
     "sma150": 149.73726684570312,
     "sma150Pct": 5.120790632231165,
     "valueChanged": true,
-    "expectedDate": "2026-09-11",
-    "plausibleDate": true,
-    "fresh": true
+    "expectedDate": "2026-09-14",
+    "plausibleDate": false,
+    "fresh": false
   },
   "goldMacro": {
     "symbol": "4GLD.DE",
@@ -33,9 +33,9 @@
     "sma150": 125.29766693115235,
     "sma150Pct": -3.3022668102164365,
     "valueChanged": true,
-    "expectedDate": "2026-09-11",
-    "plausibleDate": true,
-    "fresh": true
+    "expectedDate": "2026-09-14",
+    "plausibleDate": false,
+    "fresh": false
   },
   "table": [
     {
@@ -63,9 +63,9 @@
       "previousDate": "2026-09-10",
       "valueChanged": true,
       "rank": 1,
-      "expectedDate": "2026-09-11",
-      "plausibleDate": true,
-      "fresh": true,
+      "expectedDate": "2026-09-14",
+      "plausibleDate": false,
+      "fresh": false,
       "invested": true,
       "slot": 1
     },
@@ -94,9 +94,9 @@
       "previousDate": "2026-09-10",
       "valueChanged": true,
       "rank": 2,
-      "expectedDate": "2026-09-11",
-      "plausibleDate": true,
-      "fresh": true,
+      "expectedDate": "2026-09-14",
+      "plausibleDate": false,
+      "fresh": false,
       "invested": true,
       "slot": 2
     },
@@ -125,9 +125,9 @@
       "previousDate": "2026-09-10",
       "valueChanged": true,
       "rank": 3,
-      "expectedDate": "2026-09-11",
-      "plausibleDate": true,
-      "fresh": true,
+      "expectedDate": "2026-09-14",
+      "plausibleDate": false,
+      "fresh": false,
       "invested": false,
       "slot": 0
     },
@@ -156,9 +156,9 @@
       "previousDate": "2026-09-10",
       "valueChanged": true,
       "rank": 4,
-      "expectedDate": "2026-09-11",
-      "plausibleDate": true,
-      "fresh": true,
+      "expectedDate": "2026-09-14",
+      "plausibleDate": false,
+      "fresh": false,
       "invested": false,
       "slot": 0
     },
@@ -187,9 +187,9 @@
       "previousDate": "2026-09-10",
       "valueChanged": true,
       "rank": 5,
-      "expectedDate": "2026-09-11",
-      "plausibleDate": true,
-      "fresh": true,
+      "expectedDate": "2026-09-14",
+      "plausibleDate": false,
+      "fresh": false,
       "invested": false,
       "slot": 0
     },
@@ -218,9 +218,9 @@
       "previousDate": "2026-09-10",
       "valueChanged": true,
       "rank": 6,
-      "expectedDate": "2026-09-11",
-      "plausibleDate": true,
-      "fresh": true,
+      "expectedDate": "2026-09-14",
+      "plausibleDate": false,
+      "fresh": false,
       "invested": false,
       "slot": 0
     },
@@ -249,9 +249,9 @@
       "previousDate": "2026-09-10",
       "valueChanged": true,
       "rank": 7,
-      "expectedDate": "2026-09-11",
-      "plausibleDate": true,
-      "fresh": true,
+      "expectedDate": "2026-09-14",
+      "plausibleDate": false,
+      "fresh": false,
       "invested": false,
       "slot": 0
     }
